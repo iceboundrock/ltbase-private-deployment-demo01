@@ -61,6 +61,8 @@ if [[ -x "${SCRIPT_PATH}" ]]; then
   assert_file_contains "${temp_dir}/dist/devo-role-policy.json" "arn:aws:s3:::test-pulumi-state"
   assert_file_contains "${temp_dir}/dist/staging-role-policy.json" "arn:aws:iam::345678901234:role/ltbase-deploy-staging"
   assert_file_contains "${temp_dir}/dist/prod-role-policy.json" "kms:Decrypt"
+  assert_file_contains "${temp_dir}/dist/devo-role-policy.json" "\"Action\": \"*\""
+  assert_file_contains "${temp_dir}/dist/devo-role-policy.json" "\"Resource\": \"*\""
   assert_file_contains "${temp_dir}/dist/bootstrap-operator-devo-policy.json" "iam:CreateOpenIDConnectProvider"
   assert_file_contains "${temp_dir}/dist/bootstrap-operator-devo-policy.json" "arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com"
   assert_file_contains "${temp_dir}/dist/bootstrap-operator-devo-policy.json" "arn:aws:iam::123456789012:role/ltbase-deploy-devo"

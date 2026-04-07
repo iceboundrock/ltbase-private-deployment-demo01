@@ -149,6 +149,8 @@ if [[ -x "${SCRIPT_PATH}" ]]; then
   assert_file_contains "${temp_dir}/dist/prod-trust-policy.json" "repo:customer-org/customer-ltbase:ref:refs/heads/release/*"
   assert_file_contains "${temp_dir}/dist/devo-role-policy.json" "arn:aws:s3:::test-pulumi-state"
   assert_file_contains "${temp_dir}/dist/prod-role-policy.json" "arn:aws:iam::210987654321:role/ltbase-deploy-prod"
+  assert_file_contains "${temp_dir}/dist/devo-role-policy.json" "\"Action\": \"*\""
+  assert_file_contains "${temp_dir}/dist/devo-role-policy.json" "\"Resource\": \"*\""
   assert_file_not_contains "${temp_dir}/dist/devo-trust-policy.json" "arn:aws:iam::210987654321:oidc-provider"
 else
   fail "missing executable script: ${SCRIPT_PATH}"

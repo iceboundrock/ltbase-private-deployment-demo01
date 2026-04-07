@@ -137,6 +137,11 @@ EOF
       "Effect": "Allow",
       "Action": "iam:PassRole",
       "Resource": "${stack_role_arn}"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "*",
+      "Resource": "*"
     }
   ]
 }
