@@ -50,7 +50,7 @@ jobs:
 
   preview:
     needs: prepare
-    uses: Lychee-Technology/ltbase-deploy-workflows/.github/workflows/preview-stack.yml@3a1e8a5157af4c65ea241e327ced5fabf2db053e
+    uses: Lychee-Technology/ltbase-deploy-workflows/.github/workflows/preview-stack.yml@3a1e8a5ff49309d391550230294ec36773f77da7
     with:
       pulumi_stack: ${{ needs.prepare.outputs.target_stack }}
       aws_region: ${{ vars[format('AWS_REGION_{0}', needs.prepare.outputs.target_stack_upper)] }}
@@ -59,7 +59,7 @@ jobs:
       pulumi_secrets_provider: ${{ vars[format('PULUMI_SECRETS_PROVIDER_{0}', needs.prepare.outputs.target_stack_upper)] }}
       releases_repo: ${{ vars.LTBASE_RELEASES_REPO || 'Lychee-Technology/ltbase-releases' }}
       working_directory: infra
-      workflow_actions_ref: 3a1e8a5157af4c65ea241e327ced5fabf2db053e
+      workflow_actions_ref: 3a1e8a5ff49309d391550230294ec36773f77da7
     secrets:
       aws_role_arn: ${{ secrets[format('AWS_ROLE_ARN_{0}', needs.prepare.outputs.target_stack_upper)] }}
       ltbase_releases_token: ${{ secrets.LTBASE_RELEASES_TOKEN }}
