@@ -180,6 +180,7 @@ jobs:
       pulumi_secrets_provider: ${{ vars[format('PULUMI_SECRETS_PROVIDER_{0}', needs.prepare.outputs.target_stack_upper)] }}
       releases_repo: ${{ vars.LTBASE_RELEASES_REPO || 'Lychee-Technology/ltbase-releases' }}
       working_directory: infra
+      workflow_actions_ref: e1d61948b14f0635d9f90b1719be6410524acca5
       run_canary: ${{ needs.prepare.outputs.run_canary == 'true' }}
       refresh_after_apply: true
     secrets:
