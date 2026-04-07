@@ -1,0 +1,42 @@
+name: Rollout LTBase Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_id:
+        description: Official LTBase release tag to roll out across the full promotion path
+        required: true
+        type: string
+
+permissions:
+  actions: write
+  contents: read
+  id-token: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      start_stack: ${{ steps.plan.outputs.start_stack }}
+    steps:
+      - id: plan
+        env:
+          PROMOTION_PATH: ${{ vars.PROMOTION_PATH || vars.STACKS || 'devo,prod' }}
+        run: |
+          promotion_path="$(printf '%s' "${PROMOTION_PATH}" | tr -d '[:space:]')"
+          IFS=',' read -r -a path <<<"${promotion_path}"
+          start_stack="${path[0]:-}"
+          if [[ -z "${start_stack}" ]]; then
+            echo "PROMOTION_PATH must define at least one stack" >&2
+            exit 1
+          fi
+          echo "start_stack=${start_stack}" >> "${GITHUB_OUTPUT}"
+
+  rollout:
+    needs: prepare
+    uses: ./.github/workflows/rollout-hop.yml
+    with:
+      release_id: ${{ inputs.release_id }}
+      target_stack: ${{ needs.prepare.outputs.start_stack }}
+      continue_chain: true
+    secrets: inherit

@@ -1,0 +1,53 @@
+package config
+
+import "testing"
+
+func TestValueOrDefault(t *testing.T) {
+	if got := valueOrDefault(" ", "fallback"); got != "fallback" {
+		t.Fatalf("valueOrDefault() = %q", got)
+	}
+}
+
+func TestSplitCSV(t *testing.T) {
+	got := splitCSV("a, b,,c")
+	if len(got) != 3 {
+		t.Fatalf("splitCSV() length = %d", len(got))
+	}
+}
+
+func TestValidateRequiresOIDCProviderArnWhenNotManaged(t *testing.T) {
+	cfg := StackConfig{
+		ManageGitHubOIDCProvider: false,
+	}
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("Validate() expected error for missing githubOidcProviderArn")
+	}
+}
+
+func TestValidateAcceptsManagedProvider(t *testing.T) {
+	cfg := StackConfig{
+		ManageGitHubOIDCProvider: true,
+	}
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("Validate() unexpected error: %v", err)
+	}
+}
+
+func TestValueOrDefaultKeepsManagedDSQLDefaults(t *testing.T) {
+	if got := valueOrDefault("", "postgres"); got != "postgres" {
+		t.Fatalf("default db = %q", got)
+	}
+	if got := valueOrDefault("", "admin"); got != "admin" {
+		t.Fatalf("default user = %q", got)
+	}
+}
+
+func TestValidateAllowsOptionalDSQLEndpoint(t *testing.T) {
+	cfg := StackConfig{
+		ManageGitHubOIDCProvider: true,
+		DSQLEndpoint:             "",
+	}
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("Validate() unexpected error: %v", err)
+	}
+}

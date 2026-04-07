@@ -1,0 +1,32 @@
+name: Promote LTBase Between Stacks
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_id:
+        description: Official LTBase release tag to promote
+        required: true
+        type: string
+      from_stack:
+        description: Current deployed stack in PROMOTION_PATH
+        required: true
+        type: string
+      to_stack:
+        description: Next stack in PROMOTION_PATH
+        required: true
+        type: string
+
+permissions:
+  actions: write
+  contents: read
+  id-token: write
+
+jobs:
+  promote:
+    uses: ./.github/workflows/rollout-hop.yml
+    with:
+      release_id: ${{ inputs.release_id }}
+      from_stack: ${{ inputs.from_stack }}
+      target_stack: ${{ inputs.to_stack }}
+      continue_chain: false
+    secrets: inherit

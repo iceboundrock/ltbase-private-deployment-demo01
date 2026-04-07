@@ -1,0 +1,52 @@
+# Day-2 Operations
+
+> **[中文版](08-day-2-operations.zh.md)**
+
+Back to the main guide: [`../CUSTOMER_ONBOARDING.md`](../CUSTOMER_ONBOARDING.md)
+
+## Purpose
+
+Use this guide for normal follow-up operations after the first successful deployment.
+
+## Typical Operations
+
+### Upgrade to a new LTBase release
+
+1. If you want to bring in newer template-managed files first, run `./scripts/sync-template-upstream.sh` from your deployment repository on a clean local `main` branch.
+2. Review the synced template changes. The sync preserves local `.env` files, `infra/Pulumi.*.yaml`, and the sync helper's own script/test files.
+3. Update `LTBASE_RELEASE_ID` in GitHub variables, or pass a new `release_id` directly to the workflow.
+4. Run the preview workflow.
+5. Review the Pulumi preview output.
+6. Trigger `rollout.yml` once for the new release.
+7. Validate each deployed stack before approving the next protected target environment.
+8. Approve each protected hop in order until the promotion path completes.
+
+### Re-run preview before changes
+
+Use preview whenever you change stack configuration, release selection, or deployment-related values.
+
+### Maintain local bootstrap inputs
+
+Keep `.env` private, current, and outside version control.
+
+## Operational Reminders
+
+- do not rebuild LTBase application binaries in the deployment repository
+- do not commit `.env`
+- do not bypass the production approval gate
+- keep `LTBASE_RELEASES_TOKEN` scoped to release download access only
+- run `scripts/sync-template-upstream.sh` only from a clean local `main` branch
+
+## Expected Result
+
+You can safely repeat previews and promotion-path rollouts after onboarding is complete.
+
+## Common Mistakes
+
+- approving a later stack before validating the previous hop
+- changing deployment inputs without running preview first
+- treating the deployment repository as an application source repository
+
+## Back to Onboarding
+
+Return to [`../CUSTOMER_ONBOARDING.md`](../CUSTOMER_ONBOARDING.md).
