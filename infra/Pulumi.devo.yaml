@@ -1,0 +1,22 @@
+secretsprovider: awskms://alias/ltbase-pulumi-secrets?region=us-east-2
+encryptedkey: AQICAHiP1KlI+KUDwO1vCo1Jgg1zjwRV/0fA7buos2m9RV+3tAHmz9fH7dsrM/Fbt+m+Y0cxAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMPIykend+2/sUhCS3AgEQgDs93+t5bHL75f4J8nsLxt0f+JKqtMVLG35C8LJQbGfjwK+eY53NafTo7MCg0+XKnoSkKflpTXHEyYx1rg==
+config:
+  ltbase-infra:awsRegion: us-east-2
+  ltbase-infra:runtimeBucket: ltbase-private-deployment-demo01-runtime-devo
+  ltbase-infra:tableName: ltbase-private-deployment-demo01-devo
+  ltbase-infra:apiDomain: demo01_api_devo.ltbase.dev
+  ltbase-infra:controlPlaneDomain: demo01_ctl_devo.ltbase.dev
+  ltbase-infra:authDomain: demo01_auth_devo.ltbase.dev
+  ltbase-infra:cloudflareZoneId: b4ba9f847e6e12a0abb4d3d1f52bb752
+  ltbase-infra:oidcIssuerUrl: https://ltbase-demo01-oidc.ltbase.dev/devo
+  ltbase-infra:jwksUrl: https://ltbase-demo01-oidc.ltbase.dev/devo/.well-known/jwks.json
+  ltbase-infra:githubOrg: iceboundrock
+  ltbase-infra:githubRepo: ltbase-private-deployment-demo01
+  ltbase-infra:releaseId: v1.0.0
+  ltbase-infra:dsqlPort: "5432"
+  ltbase-infra:dsqlDB: postgres
+  ltbase-infra:dsqlUser: admin
+  ltbase-infra:dsqlProjectSchema: ltbase
+  ltbase-infra:geminiModel: gemini-3-flash-preview
+  ltbase-infra:geminiApiKey:
+    secure: v1:JxAYZMff7c1Hnymr:uBLq2dj0766SdjW01dw2QQd54veMN6X7FIa3ArgzGAeTleK9ETNHAqpX1CL5dKQF6ga4tBFkVg==
