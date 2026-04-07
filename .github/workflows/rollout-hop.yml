@@ -171,7 +171,7 @@ jobs:
       - prepare
       - approve
     if: ${{ always() && needs.prepare.result == 'success' && (needs.prepare.outputs.approval_required != 'true' || needs.approve.result == 'success') }}
-    uses: Lychee-Technology/ltbase-deploy-workflows/.github/workflows/rollout-hop.yml@178f59fac632a6405eac10ae2417c312931e7cb4
+    uses: Lychee-Technology/ltbase-deploy-workflows/.github/workflows/rollout-hop.yml@e1d61948b14f0635d9f90b1719be6410524acca5
     with:
       pulumi_stack: ${{ needs.prepare.outputs.target_stack }}
       aws_region: ${{ vars[format('AWS_REGION_{0}', needs.prepare.outputs.target_stack_upper)] }}
