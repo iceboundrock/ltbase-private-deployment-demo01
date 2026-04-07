@@ -113,6 +113,7 @@ if [[ -x "${SCRIPT_PATH}" ]]; then
   assert_log_contains "${log_file}" "pulumi config set runtimeBucket ltbase-private-deployment-runtime-prod --stack prod"
   assert_log_contains "${log_file}" "pulumi config set apiDomain api.example.com --stack prod"
   assert_log_contains "${log_file}" "pulumi config set oidcIssuerUrl https://issuer.example.com/prod --stack prod"
+  assert_log_contains "${log_file}" "pulumi config set githubOidcProviderArn arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com --stack prod"
   assert_log_contains "${log_file}" "pulumi config set tableName ltbase-private-deployment-prod --stack prod"
   assert_log_contains "${log_file}" "pulumi config set dsqlDB postgres --stack prod"
   assert_log_contains "${log_file}" "pulumi config set dsqlUser admin --stack prod"
