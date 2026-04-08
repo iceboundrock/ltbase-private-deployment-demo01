@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -21,7 +22,7 @@ type AuthProvider struct {
 }
 
 func loadAuthProviderConfig(path string) (AuthProviderConfig, error) {
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(resolveAuthProviderConfigPath(path))
 	if err != nil {
 		return AuthProviderConfig{}, fmt.Errorf("read auth provider config: %w", err)
 	}
@@ -55,6 +56,14 @@ func loadAuthProviderConfig(path string) (AuthProviderConfig, error) {
 		seen[provider.Name] = struct{}{}
 	}
 	return cfg, nil
+}
+
+func resolveAuthProviderConfigPath(path string) string {
+	cleaned := filepath.Clean(path)
+	if filepath.IsAbs(cleaned) || !strings.HasPrefix(cleaned, "infra/") {
+		return cleaned
+	}
+	return filepath.Join("..", cleaned)
 }
 
 func authProviderNames(cfg AuthProviderConfig) []string {

@@ -3,6 +3,7 @@ package services
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -69,5 +70,41 @@ func TestLoadAuthProviderConfigRejectsInvalidJSON(t *testing.T) {
 	path := writeProviderConfigFixture(t, `{not-json}`)
 	if _, err := loadAuthProviderConfig(path); err == nil {
 		t.Fatal("loadAuthProviderConfig() expected invalid json error")
+	}
+}
+
+func TestLoadAuthProviderConfigSupportsInfraPrefixedPath(t *testing.T) {
+	repoRoot := t.TempDir()
+	infraDir := filepath.Join(repoRoot, "infra")
+	if err := os.MkdirAll(infraDir, 0o755); err != nil {
+		t.Fatalf("os.MkdirAll() error = %v", err)
+	}
+	configPath := filepath.Join(infraDir, "auth-providers.devo.json")
+	if err := os.WriteFile(configPath, []byte(`{"providers": []}`), 0o600); err != nil {
+		t.Fatalf("os.WriteFile() error = %v", err)
+	}
+
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("os.Getwd() error = %v", err)
+	}
+	if !strings.HasSuffix(filepath.ToSlash(cwd), "/infra/internal/services") {
+		t.Fatalf("test must run from infra/internal/services, got %q", cwd)
+	}
+	if err := os.Chdir(filepath.Join(repoRoot, "infra")); err != nil {
+		t.Fatalf("os.Chdir() error = %v", err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(cwd); err != nil {
+			t.Fatalf("os.Chdir() cleanup error = %v", err)
+		}
+	})
+
+	cfg, err := loadAuthProviderConfig("infra/auth-providers.devo.json")
+	if err != nil {
+		t.Fatalf("loadAuthProviderConfig() error = %v", err)
+	}
+	if len(cfg.Providers) != 0 {
+		t.Fatalf("provider count = %d, want 0", len(cfg.Providers))
 	}
 }
