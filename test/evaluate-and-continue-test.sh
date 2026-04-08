@@ -103,9 +103,7 @@ cmd="${1:-}"
 sub="${2:-}"
 if [[ "${cmd} ${sub}" == "repo view" ]]; then
   if [[ "${SCENARIO}" == "repo_config_missing" || "${SCENARIO}" == "bootstrap_force" ]]; then
-    exit 1
-  fi
-  if [[ "${3:-}" == "customer-org/customer-ltbase-oidc-discovery" && "${SCENARIO}" == "oidc_companion_missing" ]]; then
+    printf 'could not resolve to a repository\n' >&2
     exit 1
   fi
   exit 0
@@ -147,11 +145,7 @@ if [[ "${cmd}" == "api" ]]; then
 fi
 if [[ "${cmd} ${sub}" == "variable list" ]]; then
   if [[ "${4:-}" == "customer-org/customer-ltbase-oidc-discovery" ]]; then
-    if [[ "${SCENARIO}" == "oidc_companion_missing" ]]; then
-      printf '[]'
-    else
-      printf '[{"name":"OIDC_DISCOVERY_DOMAIN"},{"name":"OIDC_DISCOVERY_STACK_CONFIG"}]'
-    fi
+    printf '[{"name":"OIDC_DISCOVERY_DOMAIN"},{"name":"OIDC_DISCOVERY_STACK_CONFIG"},{"name":"CLOUDFLARE_ACCOUNT_ID"},{"name":"OIDC_DISCOVERY_PAGES_PROJECT"}]'
     exit 0
   fi
   if [[ "${SCENARIO}" == "repo_config_missing" ]]; then
@@ -165,7 +159,7 @@ if [[ "${cmd} ${sub}" == "variable list" ]]; then
 fi
 if [[ "${cmd} ${sub}" == "secret list" ]]; then
   if [[ "${4:-}" == "customer-org/customer-ltbase-oidc-discovery" ]]; then
-    printf '[]'
+    printf '[{"name":"CLOUDFLARE_API_TOKEN"}]'
     exit 0
   fi
   if [[ "${SCENARIO}" == "repo_config_missing" ]]; then
@@ -235,18 +229,30 @@ exit 0
 EOF
   chmod +x "${fake_bin}/aws"
 
-  cat >"${fake_bin}/curl" <<'EOF'
+cat >"${fake_bin}/curl" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 printf 'curl %s\n' "$*" >>"${COMMAND_LOG}"
 method="GET"
 url=""
+output_file=""
+write_out=""
+payload='{"success":true}'
+status_code="200"
 args=("$@")
 index=0
 while [[ ${index} -lt ${#args[@]} ]]; do
   case "${args[${index}]}" in
     -X)
       method="${args[$((index + 1))]}"
+      index=$((index + 2))
+      ;;
+    -o)
+      output_file="${args[$((index + 1))]}"
+      index=$((index + 2))
+      ;;
+    -w)
+      write_out="${args[$((index + 1))]}"
       index=$((index + 2))
       ;;
     http*)
@@ -258,13 +264,23 @@ while [[ ${index} -lt ${#args[@]} ]]; do
       ;;
   esac
 done
-if [[ "${SCENARIO}" == "oidc_companion_missing" && "${method}" == "GET" && "${url}" == *"/pages/projects/customer-ltbase-oidc-discovery" ]]; then
-  exit 22
+if [[ "${SCENARIO}" == "oidc_companion_missing" && "${method}" == "GET" && "${url}" == *"/pages/projects/customer-ltbase-oidc-discovery" && "${url}" != *"/domains/"* ]]; then
+  payload='{"success":true,"result":{"latest_deployment":null}}'
 fi
 if [[ "${SCENARIO}" == "oidc_companion_missing" && "${method}" == "GET" && "${url}" == *"/pages/projects/customer-ltbase-oidc-discovery/domains/oidc.customer.example.com" ]]; then
-  exit 22
+  payload='{"success":true,"result":{"name":"oidc.customer.example.com"}}'
 fi
-printf '{"success":true}'
+if [[ "${SCENARIO}" != "oidc_companion_missing" && "${method}" == "GET" && "${url}" == *"/pages/projects/customer-ltbase-oidc-discovery" && "${url}" != *"/domains/"* ]]; then
+  payload='{"success":true,"result":{"latest_deployment":{"id":"deployment-123"}}}'
+fi
+if [[ -n "${output_file}" ]]; then
+  printf '%s' "${payload}" >"${output_file}"
+  if [[ "${write_out}" == '%{http_code}' ]]; then
+    printf '%s' "${status_code}"
+  fi
+  exit 0
+fi
+printf '%s' "${payload}"
 EOF
   chmod +x "${fake_bin}/curl"
 
@@ -380,6 +396,15 @@ run_expect_exit_code 2 env \
 
 assert_file_contains "${temp_dir}/report-repo/report.json" '"status": "needs_repo_config"'
 
+run_expect_exit_code 0 env \
+  PATH="${temp_dir}/bin:$PATH" \
+  COMMAND_LOG="${temp_dir}/commands.log" \
+  SCENARIO="repo_config_missing" \
+  "${SCRIPT_PATH}" --env-file "${temp_dir}/.env" --infra-dir "${temp_dir}/infra" --scope foundation --report-dir "${temp_dir}/report-foundation-complete"
+
+assert_file_contains "${temp_dir}/report-foundation-complete/report.json" '"scope": "foundation"'
+assert_file_contains "${temp_dir}/report-foundation-complete/report.json" '"status": "complete"'
+
 run_expect_exit_code 2 env \
   PATH="${temp_dir}/bin:$PATH" \
   COMMAND_LOG="${temp_dir}/commands.log" \
@@ -429,6 +454,10 @@ run_expect_exit_code 2 env \
 
 assert_file_contains "${temp_dir}/report-oidc/report.json" '"oidcDiscovery"'
 assert_file_contains "${temp_dir}/report-oidc/report.json" '"status": "needs_oidc_companion"'
+assert_file_contains "${temp_dir}/report-oidc/report.json" '"repoConfigPresent": true'
+assert_file_contains "${temp_dir}/report-oidc/report.json" '"pagesProjectPresent": true'
+assert_file_contains "${temp_dir}/report-oidc/report.json" '"pagesDeploymentPresent": false'
+assert_file_contains "${temp_dir}/report-oidc/report.json" '"pagesDomainPresent": true'
 
 rm -rf "${temp_dir}/infra"
 mkdir -p "${temp_dir}/infra"
@@ -447,6 +476,31 @@ assert_log_contains "${temp_dir}/commands.log" "pulumi stack init devo --secrets
 assert_log_contains "${temp_dir}/commands.log" "pulumi stack init staging --secrets-provider awskms://alias/test-pulumi-secrets?region=us-east-1"
 assert_log_contains "${temp_dir}/commands.log" "pulumi stack init prod --secrets-provider awskms://alias/test-pulumi-secrets?region=us-west-2"
 assert_log_contains "${temp_dir}/commands.log" "gh workflow run rollout.yml --repo customer-org/customer-ltbase -f release_id=v9.9.9"
+
+: >"${temp_dir}/commands.log"
+run_expect_exit_code 0 env \
+  PATH="${temp_dir}/bin:$PATH" \
+  COMMAND_LOG="${temp_dir}/commands.log" \
+  SCENARIO="bootstrap_force" \
+  "${SCRIPT_PATH}" --env-file "${temp_dir}/.env" --infra-dir "${temp_dir}/infra" --scope foundation --force --release-id v4.0.0 --report-dir "${temp_dir}/report-force-foundation"
+
+assert_log_contains "${temp_dir}/report-force-foundation/actions.log" "render-bootstrap-policies.sh --env-file ${temp_dir}/.env"
+assert_log_contains "${temp_dir}/report-force-foundation/actions.log" "bootstrap-aws-foundation.sh --env-file ${temp_dir}/.env"
+if grep -Fq "create-deployment-repo.sh" "${temp_dir}/report-force-foundation/actions.log"; then
+  fail "foundation force should not create deployment repos"
+fi
+if grep -Fq "bootstrap-deployment-repo.sh" "${temp_dir}/report-force-foundation/actions.log"; then
+  fail "foundation force should not bootstrap deployment repos"
+fi
+if grep -Fq "bootstrap-oidc-discovery-companion.sh" "${temp_dir}/report-force-foundation/actions.log"; then
+  fail "foundation force should not bootstrap oidc companion"
+fi
+if grep -Fq "reconcile-managed-dsql-endpoint.sh" "${temp_dir}/report-force-foundation/actions.log"; then
+  fail "foundation force should not reconcile dsql"
+fi
+if grep -Fq "gh workflow run rollout" "${temp_dir}/report-force-foundation/actions.log"; then
+  fail "foundation force should not trigger rollout workflows"
+fi
 
 # Bug #20: force mode with rollout_mix should reconcile DSQL and resume rollout via rollout-hop
 for stack in devo staging prod; do
