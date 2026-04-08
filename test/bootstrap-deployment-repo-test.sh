@@ -43,6 +43,9 @@ AWS_REGION_PROD=us-west-2
 AWS_ACCOUNT_ID_DEVO=123456789012
 AWS_ACCOUNT_ID_STAGING=123456789012
 AWS_ACCOUNT_ID_PROD=123456789012
+AWS_PROFILE_DEVO=devo-profile
+AWS_PROFILE_STAGING=staging-profile
+AWS_PROFILE_PROD=prod-profile
 AWS_ROLE_NAME_DEVO=test-deploy-role
 AWS_ROLE_NAME_STAGING=test-staging-role
 AWS_ROLE_NAME_PROD=test-prod-role
@@ -62,6 +65,10 @@ CONTROL_DOMAIN_PROD=control.example.com
 AUTH_DOMAIN_DEVO=auth.devo.example.com
 AUTH_DOMAIN_STAGING=auth.staging.example.com
 AUTH_DOMAIN_PROD=auth.example.com
+PROJECT_ID=33333333-3333-4333-8333-333333333333
+AUTH_PROVIDER_CONFIG_FILE_DEVO=infra/auth-providers.devo.json
+AUTH_PROVIDER_CONFIG_FILE_STAGING=infra/auth-providers.staging.json
+AUTH_PROVIDER_CONFIG_FILE_PROD=infra/auth-providers.prod.json
 CLOUDFLARE_ZONE_ID=zone-123
 OIDC_ISSUER_URL_DEVO=https://issuer.example.com/devo
 OIDC_ISSUER_URL_STAGING=https://issuer.example.com/staging
@@ -86,7 +93,7 @@ chmod +x "${fake_bin}/gh"
 cat >"${fake_bin}/pulumi" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
-printf 'PWD=%s pulumi %s\n' "\$PWD" "\$*" >>"${log_file}"
+printf 'PWD=%s AWS_REGION=%s AWS_DEFAULT_REGION=%s AWS_PROFILE=%s pulumi %s\n' "\$PWD" "\${AWS_REGION:-}" "\${AWS_DEFAULT_REGION:-}" "\${AWS_PROFILE:-}" "\$*" >>"${log_file}"
 if [[ "\$1 \$2" == "stack select" ]]; then
   exit 1
 fi
@@ -109,9 +116,12 @@ if [[ -x "${SCRIPT_PATH}" ]]; then
   assert_log_contains "${log_file}" "gh secret set AWS_ROLE_ARN_DEVO --repo Lychee-Technology/ltbase-private-deployment --body arn:aws:iam::123456789012:role/test-deploy-role"
   assert_log_contains "${log_file}" "gh secret set AWS_ROLE_ARN_STAGING --repo Lychee-Technology/ltbase-private-deployment --body arn:aws:iam::123456789012:role/test-staging-role"
   assert_log_contains "${log_file}" "gh secret set AWS_ROLE_ARN_PROD --repo Lychee-Technology/ltbase-private-deployment --body arn:aws:iam::123456789012:role/test-prod-role"
-  assert_log_contains "${log_file}" "PWD=${temp_dir}/infra pulumi stack init prod --secrets-provider awskms://alias/test-pulumi-secrets?region=us-west-2"
+  assert_log_contains "${log_file}" "AWS_REGION=ap-northeast-1 AWS_DEFAULT_REGION=ap-northeast-1 AWS_PROFILE=devo-profile pulumi login s3://test-pulumi-state"
+  assert_log_contains "${log_file}" "PWD=${temp_dir}/infra AWS_REGION=us-west-2 AWS_DEFAULT_REGION=us-west-2 AWS_PROFILE=prod-profile pulumi stack init prod --secrets-provider awskms://alias/test-pulumi-secrets?region=us-west-2"
   assert_log_contains "${log_file}" "pulumi config set runtimeBucket ltbase-private-deployment-runtime-prod --stack prod"
   assert_log_contains "${log_file}" "pulumi config set apiDomain api.example.com --stack prod"
+  assert_log_contains "${log_file}" "pulumi config set projectId 33333333-3333-4333-8333-333333333333 --stack prod"
+  assert_log_contains "${log_file}" "pulumi config set authProviderConfigFile infra/auth-providers.prod.json --stack prod"
   assert_log_contains "${log_file}" "pulumi config set oidcIssuerUrl https://issuer.example.com/prod --stack prod"
   assert_log_contains "${log_file}" "pulumi config set githubOidcProviderArn arn:aws:iam::123456789012:oidc-provider/token.actions.githubusercontent.com --stack prod"
   assert_log_contains "${log_file}" "pulumi config set tableName ltbase-private-deployment-prod --stack prod"

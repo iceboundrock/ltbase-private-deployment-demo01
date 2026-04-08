@@ -59,7 +59,6 @@ jobs:
       pulumi_secrets_provider: ${{ vars[format('PULUMI_SECRETS_PROVIDER_{0}', needs.prepare.outputs.target_stack_upper)] }}
       releases_repo: ${{ vars.LTBASE_RELEASES_REPO || 'Lychee-Technology/ltbase-releases' }}
       working_directory: infra
-      workflow_actions_ref: b386c8015603dd0b9d08d6a7202ac2ee3afc3706
     secrets:
       aws_role_arn: ${{ secrets[format('AWS_ROLE_ARN_{0}', needs.prepare.outputs.target_stack_upper)] }}
       ltbase_releases_token: ${{ secrets.LTBASE_RELEASES_TOKEN }}

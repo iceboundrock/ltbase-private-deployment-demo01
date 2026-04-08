@@ -115,6 +115,8 @@ create_or_update_discovery_role() {
   local upper_name account_id region role_name role_arn provider_arn
   local trust_policy_path role_policy_path
 
+  bootstrap_env_require_aws_credentials_for_stack "${stack}"
+
   upper_name="$(bootstrap_env_stack_upper "${stack}")"
   account_id="$(bootstrap_env_resolve_stack_value AWS_ACCOUNT_ID "${stack}")"
   region="$(bootstrap_env_resolve_stack_value AWS_REGION "${stack}")"
