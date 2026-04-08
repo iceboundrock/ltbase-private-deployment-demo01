@@ -79,6 +79,21 @@ bootstrap_env_stack_profile_args() {
   fi
 }
 
+bootstrap_env_stack_runtime_env() {
+  local stack="$1"
+  local upper_name profile_var_name region
+
+  upper_name="$(bootstrap_env_stack_upper "${stack}")"
+  profile_var_name="AWS_PROFILE_${upper_name}"
+  region="$(bootstrap_env_resolve_stack_value AWS_REGION "${stack}")"
+
+  printf '%s\n' "AWS_REGION=${region}"
+  printf '%s\n' "AWS_DEFAULT_REGION=${region}"
+  if [[ -n "${!profile_var_name:-}" ]]; then
+    printf '%s\n' "AWS_PROFILE=${!profile_var_name}"
+  fi
+}
+
 bootstrap_env_aws_command_for_stack() {
   local stack="$1"
   shift
