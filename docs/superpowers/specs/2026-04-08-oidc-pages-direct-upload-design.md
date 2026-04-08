@@ -21,17 +21,27 @@ Observed failure mode in `iceboundrock/ltbase-private-deployment-demo01-oidc-dis
 
 That means the custom OIDC issuer URL can still fail AWS API Gateway validation because nothing is actually deployed at the Pages hostname.
 
+Observed follow-up failure mode during live validation:
+
+- the companion publish workflow can succeed
+- the discovery URL can return HTTP 200
+- but Cloudflare Pages can still serve `/.well-known/openid-configuration` as `application/octet-stream`
+- AWS API Gateway JWT authorizer validation rejects that issuer as if discovery were invalid
+
+So deployability is not enough. The served discovery endpoint must also have the expected JSON content type.
+
 ## Goals
 
 - Make GitHub Actions the source of truth for OIDC companion site deployment.
 - Keep the existing companion repo model and custom domain model.
 - Remove operational dependence on Cloudflare's GitHub app connection.
 - Preserve the existing discovery document generation logic.
+- Ensure the served discovery endpoint is materially acceptable to AWS API Gateway JWT issuer validation.
 - Keep the bootstrap flow idempotent.
 
 ## Non-Goals
 
-- Do not redesign the OIDC discovery document format.
+- Do not redesign the OIDC discovery document format beyond what is needed to satisfy AWS validation of the served endpoint.
 - Do not replace Cloudflare Pages hosting.
 - Do not add a separate deployment service.
 - Do not require customers to manually reconnect GitHub in Cloudflare for normal operation.
@@ -61,7 +71,8 @@ Instead, the workflow will:
 1. Check out the repo.
 2. Generate `openid-configuration` and `jwks.json` files for each stack.
 3. Commit and push any generated file changes back to the companion repo.
-4. Deploy the repository contents to the Cloudflare Pages project using direct upload.
+4. Deploy a staged static site directory to the Cloudflare Pages project using direct upload.
+5. Publish a Pages `_headers` file so extensionless discovery documents are served with JSON content types.
 
 Cloudflare Pages becomes a static hosting target only.
 
@@ -73,6 +84,10 @@ Add a final deploy phase after the existing commit step:
 
 - install Wrangler in the workflow runner
 - authenticate using companion repo secrets
+- stage only generated stack directories into a temporary site directory
+- generate a `_headers` file for each stack so:
+  - `/<stack>/.well-known/openid-configuration` is served as `application/json; charset=utf-8`
+  - `/<stack>/.well-known/jwks.json` is served as `application/json; charset=utf-8`
 - run Pages direct upload against the companion Pages project
 
 Required companion repo secrets/variables:
@@ -81,7 +96,7 @@ Required companion repo secrets/variables:
 - variable or secret: `CLOUDFLARE_ACCOUNT_ID`
 - variable: `OIDC_DISCOVERY_PAGES_PROJECT`
 
-The deploy command should target the repository root so stack folders like `devo/.well-known/...` and `prod/.well-known/...` are published exactly as generated.
+The deploy command should target a staged site directory, not the repository root, so only generated stack folders and explicit Pages metadata are published.
 
 ### Bootstrap Changes
 
@@ -173,6 +188,7 @@ For `ltbase-private-deployment-demo01`:
 3. verify Pages project shows a non-null deployment
 4. verify `https://ltbase-demo01-oidc.ltbase.dev/devo/.well-known/openid-configuration` resolves publicly
 5. rerun rollout and verify API Gateway issuer validation passes
+6. if rollout gets past issuer validation but fails on API Gateway route conflicts, treat that as a separate migration bug, not an OIDC regression
 
 ## Migration Notes
 
@@ -180,6 +196,7 @@ For `ltbase-private-deployment-demo01`:
 - The Pages project name and custom domain do not need to change.
 - Disconnected Cloudflare Git integration can be ignored after direct upload is working.
 - If a Git-integrated project later reconnects, Git integration should still not be the required production path.
+- Existing deployment stacks may still hit unrelated Pulumi migration issues after the issuer problem is fixed. In live validation, the next blocker was a control-plane API Gateway route rename that needed resource aliases to preserve route identity during update.
 
 ## Tradeoffs
 
@@ -189,6 +206,7 @@ For `ltbase-private-deployment-demo01`:
 - deployment happens in the same workflow that generated the documents
 - easier to debug because generation and publish are one pipeline
 - works for private repos without extra Cloudflare UI work
+- lets the workflow control exact serving metadata for extensionless discovery files
 
 ### Cons
 
@@ -200,4 +218,4 @@ For `ltbase-private-deployment-demo01`:
 
 Implement direct upload in the OIDC companion workflow and update bootstrap plus readiness checks to match that model.
 
-This is the smallest durable fix for the current blocker and the right steady-state architecture for customer companion repos.
+Live validation confirmed this architecture works, but only after explicitly forcing JSON content types for `openid-configuration`. Once that was fixed, AWS API Gateway accepted the issuer and the remaining rollout blocker was a separate Pulumi route-identity migration issue.

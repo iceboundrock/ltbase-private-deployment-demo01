@@ -4,7 +4,7 @@
 
 **Goal:** Move the OIDC companion site from Cloudflare Git-integrated Pages deployment to GitHub Actions driven direct upload so issuer discovery URLs stay deployable without Cloudflare Git account linkage.
 
-**Architecture:** Keep the companion repo and discovery document generation workflow, but make the workflow publish the static site directly to the existing Pages project with Wrangler. Update bootstrap to provision the companion repo with the Cloudflare deploy config and update readiness checks so they require a real Pages deployment rather than only project existence.
+**Architecture:** Keep the companion repo and discovery document generation workflow, but make the workflow publish a staged static site directly to the existing Pages project with Wrangler. Update bootstrap to provision the companion repo with the Cloudflare deploy config and update readiness checks so they require a real Pages deployment rather than only project existence. Also ensure Pages serves extensionless `openid-configuration` as JSON, because AWS API Gateway rejects the issuer if Cloudflare serves that endpoint as `application/octet-stream`.
 
 **Tech Stack:** GitHub Actions, Cloudflare Pages, Wrangler, bash shell tests, curl JSON API checks
 
@@ -14,6 +14,7 @@
 
 - Modify: `ltbase-oidc-discovery-template/.github/workflows/publish-discovery.yml`
   - Add direct-upload deployment using Cloudflare credentials after document generation.
+  - Stage only generated stack content and publish a `_headers` file for JSON content types.
 - Modify: `ltbase-private-deployment/scripts/bootstrap-oidc-discovery-companion.sh`
   - Provision companion repo secrets/variables for direct upload and fail on Cloudflare API JSON errors.
 - Modify: `ltbase-private-deployment/test/bootstrap-oidc-discovery-companion-test.sh`
@@ -51,7 +52,7 @@ Run: `grep -n "wrangler\|pages deploy\|CLOUDFLARE_ACCOUNT_ID\|OIDC_DISCOVERY_PAG
 
 Expected: no deploy step present, proving the workflow still depends on Cloudflare Git integration.
 
-- [ ] **Step 3: Write the minimal workflow change**
+- [x] **Step 3: Write the minimal workflow change**
 
 Update the workflow to include the extra variables and a deploy step after `Commit and push`.
 
@@ -80,10 +81,10 @@ Use this shape in `ltbase-oidc-discovery-template/.github/workflows/publish-disc
           fi
 
           npm install --global wrangler
-          wrangler pages deploy . --project-name "${OIDC_DISCOVERY_PAGES_PROJECT}"
+          wrangler pages deploy <staged-site-dir> --project-name "${OIDC_DISCOVERY_PAGES_PROJECT}"
 ```
 
-Keep the rest of the generation flow intact.
+Keep the rest of the generation flow intact. During live validation this task also required publishing a `_headers` file so `/.well-known/openid-configuration` is served as `application/json; charset=utf-8`.
 
 - [ ] **Step 4: Verify the workflow now contains the direct upload path**
 
@@ -91,7 +92,7 @@ Run: `grep -n "wrangler\|pages deploy\|CLOUDFLARE_ACCOUNT_ID\|OIDC_DISCOVERY_PAG
 
 Expected: output includes all new deployment inputs and the `wrangler pages deploy .` command.
 
-- [ ] **Step 5: Commit the template workflow change**
+- [x] **Step 5: Commit the template workflow change**
 
 ```bash
 git add .github/workflows/publish-discovery.yml
@@ -316,7 +317,7 @@ Run: `gh workflow run publish-discovery.yml --repo iceboundrock/ltbase-private-d
 
 Expected: workflow starts successfully.
 
-- [ ] **Step 4: Verify the companion workflow succeeds and Pages shows a deployment**
+- [x] **Step 4: Verify the companion workflow succeeds and Pages shows a deployment**
 
 Run:
 
@@ -332,11 +333,15 @@ set -a && source .env && set +a && curl -fsS -H "Authorization: Bearer ${CLOUDFL
 
 Expected: non-null `latest_deployment`.
 
-- [ ] **Step 5: Verify the public discovery URL resolves**
+Observed result: achieved after the companion repo was switched to Pages direct upload.
+
+- [x] **Step 5: Verify the public discovery URL resolves**
 
 Run: `curl -I https://ltbase-demo01-oidc.ltbase.dev/devo/.well-known/openid-configuration`
 
 Expected: HTTP 200 after DNS and Pages propagation.
+
+Observed result: HTTP 200 was not sufficient by itself. Live validation found that `openid-configuration` initially returned `content-type: application/octet-stream`, which still caused AWS issuer validation to fail. The workflow was then patched to deploy a Pages `_headers` file and the endpoint switched to `application/json; charset=utf-8`.
 
 - [ ] **Step 6: Trigger a fresh rollout**
 
@@ -344,7 +349,7 @@ Run: `gh workflow run rollout.yml --repo iceboundrock/ltbase-private-deployment-
 
 Expected: rollout starts on the latest main commit.
 
-- [ ] **Step 7: Verify issuer validation is past the previous blocker**
+- [x] **Step 7: Verify issuer validation is past the previous blocker**
 
 Run:
 
@@ -354,6 +359,63 @@ gh run view <new-run-id> --repo iceboundrock/ltbase-private-deployment-demo01 --
 ```
 
 Expected: the `Deploy stack` step no longer fails on `Invalid issuer` for `https://ltbase-demo01-oidc.ltbase.dev/devo`.
+
+Observed result: confirmed. Rollout `24148898998` got past JWT authorizer creation after the content-type fix.
+
+### Task 5: Fix Follow-On Control API Route Migration Bug
+
+**Files:**
+- Modify: `ltbase-private-deployment-demo01/infra/internal/services/apigateway.go`
+- Modify: `ltbase-private-deployment-demo01/infra/internal/services/apigateway_test.go`
+- Backport: `ltbase-private-deployment/infra/internal/services/apigateway.go`
+- Backport: `ltbase-private-deployment/infra/internal/services/apigateway_test.go`
+
+- [x] **Step 1: Confirm the new failure is not another OIDC issue**
+
+Observed in rollout `24148518579`:
+
+```text
+ConflictException: Route with key ANY /{proxy+} already exists for this API
+ConflictException: Route with key ANY / already exists for this API
+```
+
+At the same time, the three JWT authorizers were created successfully. That proved the issuer problem was solved and exposed a second bug.
+
+- [x] **Step 2: Identify the Pulumi migration root cause**
+
+The control-plane routes had legacy Pulumi logical names:
+
+- `control-root`
+- `control-route`
+
+Current code uses route-key-derived names:
+
+- `control-route-any`
+- `control-route-any-proxy`
+
+That made Pulumi try create-before-delete against API Gateway route keys that must be unique.
+
+- [x] **Step 3: Add aliases for legacy control route identities**
+
+Implemented a minimal migration in `infra/internal/services/apigateway.go` so control routes keep their new logical names but alias the legacy resources during adoption.
+
+- [x] **Step 4: Add regression coverage**
+
+Added targeted test coverage in `infra/internal/services/apigateway_test.go` for the legacy control route alias mapping.
+
+- [x] **Step 5: Verify the fix locally and live**
+
+Commands run:
+
+```bash
+go test ./internal/services -run 'Test(BuildControlPlaneRouteSpecs|RouteResourceNameIsStableFromRouteKey|ControlRouteAliases)'
+```
+
+Observed live result:
+
+- demo repo fix pushed as `d8c6d79`
+- template repo backport pushed as `e3e7afd`
+- rollout `24148898998` succeeded
 
 - [ ] **Step 8: Commit any remaining demo repo changes**
 
