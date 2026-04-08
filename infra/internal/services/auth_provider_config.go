@@ -21,8 +21,8 @@ type AuthProvider struct {
 	EnableIDBinding bool     `json:"enable_id_binding"`
 }
 
-func loadAuthProviderConfig(path string) (AuthProviderConfig, error) {
-	raw, err := os.ReadFile(resolveAuthProviderConfigPath(path))
+func loadAuthProviderConfig(rootDir, path string) (AuthProviderConfig, error) {
+	raw, err := os.ReadFile(resolveAuthProviderConfigPath(rootDir, path))
 	if err != nil {
 		return AuthProviderConfig{}, fmt.Errorf("read auth provider config: %w", err)
 	}
@@ -58,12 +58,15 @@ func loadAuthProviderConfig(path string) (AuthProviderConfig, error) {
 	return cfg, nil
 }
 
-func resolveAuthProviderConfigPath(path string) string {
+func resolveAuthProviderConfigPath(rootDir, path string) string {
 	cleaned := filepath.Clean(path)
-	if filepath.IsAbs(cleaned) || !strings.HasPrefix(cleaned, "infra/") {
+	if filepath.IsAbs(cleaned) || rootDir == "" {
 		return cleaned
 	}
-	return filepath.Join("..", cleaned)
+	if strings.HasPrefix(cleaned, "infra/") {
+		return filepath.Join(rootDir, strings.TrimPrefix(cleaned, "infra/"))
+	}
+	return filepath.Join(rootDir, cleaned)
 }
 
 func authProviderNames(cfg AuthProviderConfig) []string {

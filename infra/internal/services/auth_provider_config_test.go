@@ -3,7 +3,6 @@ package services
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -29,7 +28,7 @@ func TestLoadAuthProviderConfig(t *testing.T) {
 	  ]
 	}`)
 
-	cfg, err := loadAuthProviderConfig(path)
+	cfg, err := loadAuthProviderConfig("", path)
 	if err != nil {
 		t.Fatalf("loadAuthProviderConfig() error = %v", err)
 	}
@@ -49,7 +48,7 @@ func TestLoadAuthProviderConfigRejectsDuplicateNames(t *testing.T) {
 	  ]
 	}`)
 
-	if _, err := loadAuthProviderConfig(path); err == nil {
+	if _, err := loadAuthProviderConfig("", path); err == nil {
 		t.Fatal("loadAuthProviderConfig() expected duplicate provider error")
 	}
 }
@@ -61,19 +60,29 @@ func TestLoadAuthProviderConfigRejectsMissingIssuer(t *testing.T) {
 	  ]
 	}`)
 
-	if _, err := loadAuthProviderConfig(path); err == nil {
+	if _, err := loadAuthProviderConfig("", path); err == nil {
 		t.Fatal("loadAuthProviderConfig() expected missing issuer error")
 	}
 }
 
 func TestLoadAuthProviderConfigRejectsInvalidJSON(t *testing.T) {
 	path := writeProviderConfigFixture(t, `{not-json}`)
-	if _, err := loadAuthProviderConfig(path); err == nil {
+	if _, err := loadAuthProviderConfig("", path); err == nil {
 		t.Fatal("loadAuthProviderConfig() expected invalid json error")
 	}
 }
 
-func TestLoadAuthProviderConfigSupportsInfraPrefixedPath(t *testing.T) {
+func TestResolveAuthProviderConfigPathUsesPulumiRoot(t *testing.T) {
+	rootDir := filepath.Join("blueprint", "infra")
+	if got := resolveAuthProviderConfigPath(rootDir, "infra/auth-providers.devo.json"); got != filepath.Join(rootDir, "auth-providers.devo.json") {
+		t.Fatalf("resolveAuthProviderConfigPath() = %q", got)
+	}
+	if got := resolveAuthProviderConfigPath(rootDir, "auth-providers.devo.json"); got != filepath.Join(rootDir, "auth-providers.devo.json") {
+		t.Fatalf("resolveAuthProviderConfigPath() = %q", got)
+	}
+}
+
+func TestLoadAuthProviderConfigSupportsPulumiRootDirectory(t *testing.T) {
 	repoRoot := t.TempDir()
 	infraDir := filepath.Join(repoRoot, "infra")
 	if err := os.MkdirAll(infraDir, 0o755); err != nil {
@@ -84,23 +93,7 @@ func TestLoadAuthProviderConfigSupportsInfraPrefixedPath(t *testing.T) {
 		t.Fatalf("os.WriteFile() error = %v", err)
 	}
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("os.Getwd() error = %v", err)
-	}
-	if !strings.HasSuffix(filepath.ToSlash(cwd), "/infra/internal/services") {
-		t.Fatalf("test must run from infra/internal/services, got %q", cwd)
-	}
-	if err := os.Chdir(filepath.Join(repoRoot, "infra")); err != nil {
-		t.Fatalf("os.Chdir() error = %v", err)
-	}
-	t.Cleanup(func() {
-		if err := os.Chdir(cwd); err != nil {
-			t.Fatalf("os.Chdir() cleanup error = %v", err)
-		}
-	})
-
-	cfg, err := loadAuthProviderConfig("infra/auth-providers.devo.json")
+	cfg, err := loadAuthProviderConfig(infraDir, "infra/auth-providers.devo.json")
 	if err != nil {
 		t.Fatalf("loadAuthProviderConfig() error = %v", err)
 	}
