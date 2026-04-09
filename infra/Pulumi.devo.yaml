@@ -4,6 +4,8 @@ config:
   ltbase-infra:awsRegion: us-east-2
   ltbase-infra:runtimeBucket: ltbase-private-deployment-demo01-runtime-devo
   ltbase-infra:tableName: ltbase-private-deployment-demo01-devo
+  ltbase-infra:mtlsTruststoreFile: infra/certs/cloudflare-origin-pull-ca.pem
+  ltbase-infra:mtlsTruststoreKey: mtls/cloudflare-origin-pull-ca.pem
   ltbase-infra:apiDomain: demo01-api-devo.ltbase.dev
   ltbase-infra:controlPlaneDomain: demo01-ctl-devo.ltbase.dev
   ltbase-infra:authDomain: demo01-auth-devo.ltbase.dev
