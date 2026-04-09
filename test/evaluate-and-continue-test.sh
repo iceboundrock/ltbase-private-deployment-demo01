@@ -83,6 +83,68 @@ DSQL_PORT=5432
 DSQL_DB=postgres
 DSQL_USER=admin
 DSQL_PROJECT_SCHEMA=ltbase
+MTLS_TRUSTSTORE_FILE=infra/certs/cloudflare-origin-pull-ca.pem
+MTLS_TRUSTSTORE_KEY=mtls/cloudflare-origin-pull-ca.pem
+GEMINI_API_KEY=test-gemini-key
+CLOUDFLARE_API_TOKEN=test-cloudflare-token
+LTBASE_RELEASES_TOKEN=test-release-token
+EOF
+}
+
+write_env_without_mtls() {
+  local path="$1"
+  cat >"${path}" <<'EOF'
+STACKS=devo,staging,prod
+PROMOTION_PATH=devo,staging,prod
+TEMPLATE_REPO=Lychee-Technology/ltbase-private-deployment
+GITHUB_OWNER=customer-org
+DEPLOYMENT_REPO_NAME=customer-ltbase
+DEPLOYMENT_REPO_VISIBILITY=private
+DEPLOYMENT_REPO_DESCRIPTION="Customer LTBase deployment repo"
+AWS_REGION_DEVO=ap-northeast-1
+AWS_REGION_STAGING=us-east-1
+AWS_REGION_PROD=us-west-2
+AWS_ACCOUNT_ID_DEVO=123456789012
+AWS_ACCOUNT_ID_STAGING=123456789012
+AWS_ACCOUNT_ID_PROD=210987654321
+AWS_PROFILE_DEVO=devo-profile
+AWS_PROFILE_STAGING=staging-profile
+AWS_PROFILE_PROD=prod-profile
+AWS_ROLE_NAME_DEVO=ltbase-deploy-devo
+AWS_ROLE_NAME_STAGING=ltbase-deploy-staging
+AWS_ROLE_NAME_PROD=ltbase-deploy-prod
+PULUMI_STATE_BUCKET=test-pulumi-state
+PULUMI_KMS_ALIAS=alias/test-pulumi-secrets
+PULUMI_BACKEND_URL=s3://test-pulumi-state
+LTBASE_RELEASES_REPO=Lychee-Technology/ltbase-releases
+LTBASE_RELEASE_ID=v1.0.0
+API_DOMAIN_DEVO=api.devo.example.com
+API_DOMAIN_STAGING=api.staging.example.com
+API_DOMAIN_PROD=api.example.com
+CONTROL_DOMAIN_DEVO=control.devo.example.com
+CONTROL_DOMAIN_STAGING=control.staging.example.com
+CONTROL_DOMAIN_PROD=control.example.com
+AUTH_DOMAIN_DEVO=auth.devo.example.com
+AUTH_DOMAIN_STAGING=auth.staging.example.com
+AUTH_DOMAIN_PROD=auth.example.com
+PROJECT_ID=33333333-3333-4333-8333-333333333333
+AUTH_PROVIDER_CONFIG_FILE_DEVO=infra/auth-providers.devo.json
+AUTH_PROVIDER_CONFIG_FILE_STAGING=infra/auth-providers.staging.json
+AUTH_PROVIDER_CONFIG_FILE_PROD=infra/auth-providers.prod.json
+CLOUDFLARE_ZONE_ID=zone-123
+OIDC_ISSUER_URL_DEVO=https://issuer.example.com/devo
+OIDC_ISSUER_URL_STAGING=https://issuer.example.com/staging
+OIDC_ISSUER_URL_PROD=https://issuer.example.com/prod
+JWKS_URL_DEVO=https://issuer.example.com/devo/jwks.json
+JWKS_URL_STAGING=https://issuer.example.com/staging/jwks.json
+JWKS_URL_PROD=https://issuer.example.com/prod/jwks.json
+OIDC_DISCOVERY_DOMAIN=oidc.customer.example.com
+CLOUDFLARE_ACCOUNT_ID=cf-account-123
+GEMINI_MODEL=gemini-3-flash-preview
+DSQL_PORT=5432
+DSQL_DB=postgres
+DSQL_USER=admin
+DSQL_PROJECT_SCHEMA=ltbase
 GEMINI_API_KEY=test-gemini-key
 CLOUDFLARE_API_TOKEN=test-cloudflare-token
 LTBASE_RELEASES_TOKEN=test-release-token
@@ -103,7 +165,11 @@ cmd="${1:-}"
 sub="${2:-}"
 if [[ "${cmd} ${sub}" == "repo view" ]]; then
   if [[ "${SCENARIO}" == "repo_config_missing" || "${SCENARIO}" == "bootstrap_force" ]]; then
-    printf 'could not resolve to a repository\n' >&2
+    printf 'GraphQL: Could not resolve to a Repository with the name %s.\n' "${3:-unknown}" >&2
+    exit 1
+  fi
+  if [[ "${3:-}" == "customer-org/customer-ltbase-oidc-discovery" && "${SCENARIO}" == "oidc_companion_missing" ]]; then
+    printf 'GraphQL: Could not resolve to a Repository with the name %s.\n' "${3}" >&2
     exit 1
   fi
   exit 0
@@ -145,7 +211,11 @@ if [[ "${cmd}" == "api" ]]; then
 fi
 if [[ "${cmd} ${sub}" == "variable list" ]]; then
   if [[ "${4:-}" == "customer-org/customer-ltbase-oidc-discovery" ]]; then
-    printf '[{"name":"OIDC_DISCOVERY_DOMAIN"},{"name":"OIDC_DISCOVERY_STACK_CONFIG"},{"name":"CLOUDFLARE_ACCOUNT_ID"},{"name":"OIDC_DISCOVERY_PAGES_PROJECT"}]'
+    if [[ "${SCENARIO}" == "oidc_companion_missing" ]]; then
+      printf '[]'
+    else
+      printf '[{"name":"OIDC_DISCOVERY_DOMAIN"},{"name":"OIDC_DISCOVERY_STACK_CONFIG"}]'
+    fi
     exit 0
   fi
   if [[ "${SCENARIO}" == "repo_config_missing" ]]; then
@@ -159,7 +229,7 @@ if [[ "${cmd} ${sub}" == "variable list" ]]; then
 fi
 if [[ "${cmd} ${sub}" == "secret list" ]]; then
   if [[ "${4:-}" == "customer-org/customer-ltbase-oidc-discovery" ]]; then
-    printf '[{"name":"CLOUDFLARE_API_TOKEN"}]'
+    printf '[]'
     exit 0
   fi
   if [[ "${SCENARIO}" == "repo_config_missing" ]]; then
@@ -229,16 +299,14 @@ exit 0
 EOF
   chmod +x "${fake_bin}/aws"
 
-cat >"${fake_bin}/curl" <<'EOF'
+  cat >"${fake_bin}/curl" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 printf 'curl %s\n' "$*" >>"${COMMAND_LOG}"
 method="GET"
 url=""
 output_file=""
-write_out=""
-payload='{"success":true}'
-status_code="200"
+write_format=""
 args=("$@")
 index=0
 while [[ ${index} -lt ${#args[@]} ]]; do
@@ -252,7 +320,7 @@ while [[ ${index} -lt ${#args[@]} ]]; do
       index=$((index + 2))
       ;;
     -w)
-      write_out="${args[$((index + 1))]}"
+      write_format="${args[$((index + 1))]}"
       index=$((index + 2))
       ;;
     http*)
@@ -264,23 +332,20 @@ while [[ ${index} -lt ${#args[@]} ]]; do
       ;;
   esac
 done
-if [[ "${SCENARIO}" == "oidc_companion_missing" && "${method}" == "GET" && "${url}" == *"/pages/projects/customer-ltbase-oidc-discovery" && "${url}" != *"/domains/"* ]]; then
-  payload='{"success":true,"result":{"latest_deployment":null}}'
+if [[ "${SCENARIO}" == "oidc_companion_missing" && "${method}" == "GET" && "${url}" == *"/pages/projects/customer-ltbase-oidc-discovery" ]]; then
+  exit 22
 fi
 if [[ "${SCENARIO}" == "oidc_companion_missing" && "${method}" == "GET" && "${url}" == *"/pages/projects/customer-ltbase-oidc-discovery/domains/oidc.customer.example.com" ]]; then
-  payload='{"success":true,"result":{"name":"oidc.customer.example.com"}}'
-fi
-if [[ "${SCENARIO}" != "oidc_companion_missing" && "${method}" == "GET" && "${url}" == *"/pages/projects/customer-ltbase-oidc-discovery" && "${url}" != *"/domains/"* ]]; then
-  payload='{"success":true,"result":{"latest_deployment":{"id":"deployment-123"}}}'
+  exit 22
 fi
 if [[ -n "${output_file}" ]]; then
-  printf '%s' "${payload}" >"${output_file}"
-  if [[ "${write_out}" == '%{http_code}' ]]; then
-    printf '%s' "${status_code}"
-  fi
-  exit 0
+  printf '{"success":true}' >"${output_file}"
+else
+  printf '{"success":true}'
 fi
-printf '%s' "${payload}"
+if [[ "${write_format}" == "%{http_code}" ]]; then
+  printf '200'
+fi
 EOF
   chmod +x "${fake_bin}/curl"
 
@@ -339,6 +404,20 @@ if [[ "${1:-} ${2:-} ${3:-} ${4:-}" == "config get dsqlEndpoint --stack" ]]; the
   esac
   exit 1
 fi
+if [[ "${1:-} ${2:-} ${3:-} ${4:-}" == "config get mtlsTruststoreFile --stack" ]]; then
+  if [[ "${SCENARIO}" == "missing_mtls_stack_config" ]]; then
+    exit 1
+  fi
+  printf 'infra/certs/cloudflare-origin-pull-ca.pem\n'
+  exit 0
+fi
+if [[ "${1:-} ${2:-} ${3:-} ${4:-}" == "config get mtlsTruststoreKey --stack" ]]; then
+  if [[ "${SCENARIO}" == "missing_mtls_stack_config" ]]; then
+    exit 1
+  fi
+  printf 'mtls/cloudflare-origin-pull-ca.pem\n'
+  exit 0
+fi
 if [[ "${1:-} ${2:-}" == "config set" || "${1:-} ${2:-}" == "config rm" ]]; then
   exit 0
 fi
@@ -379,6 +458,14 @@ done
 write_env "${temp_dir}/.env"
 setup_fake_bin "${temp_dir}/bin" "${temp_dir}/commands.log"
 
+write_env_without_mtls "${temp_dir}/missing-mtls.env"
+
+run_expect_exit_code 1 env \
+  PATH="${temp_dir}/bin:$PATH" \
+  COMMAND_LOG="${temp_dir}/commands.log" \
+  SCENARIO="rollout_mix" \
+  "${SCRIPT_PATH}" --env-file "${temp_dir}/missing-mtls.env" --infra-dir "${temp_dir}/infra" --report-dir "${temp_dir}/report-missing-mtls-env"
+
 run_expect_exit_code 2 env \
   PATH="${temp_dir}/bin:$PATH" \
   COMMAND_LOG="${temp_dir}/commands.log" \
@@ -395,15 +482,6 @@ run_expect_exit_code 2 env \
   "${SCRIPT_PATH}" --env-file "${temp_dir}/.env" --infra-dir "${temp_dir}/infra" --report-dir "${temp_dir}/report-repo"
 
 assert_file_contains "${temp_dir}/report-repo/report.json" '"status": "needs_repo_config"'
-
-run_expect_exit_code 0 env \
-  PATH="${temp_dir}/bin:$PATH" \
-  COMMAND_LOG="${temp_dir}/commands.log" \
-  SCENARIO="repo_config_missing" \
-  "${SCRIPT_PATH}" --env-file "${temp_dir}/.env" --infra-dir "${temp_dir}/infra" --scope foundation --report-dir "${temp_dir}/report-foundation-complete"
-
-assert_file_contains "${temp_dir}/report-foundation-complete/report.json" '"scope": "foundation"'
-assert_file_contains "${temp_dir}/report-foundation-complete/report.json" '"status": "complete"'
 
 run_expect_exit_code 2 env \
   PATH="${temp_dir}/bin:$PATH" \
@@ -449,15 +527,19 @@ assert_log_contains "${temp_dir}/commands.log" "AWS_REGION=us-west-2 AWS_DEFAULT
 run_expect_exit_code 2 env \
   PATH="${temp_dir}/bin:$PATH" \
   COMMAND_LOG="${temp_dir}/commands.log" \
+  SCENARIO="missing_mtls_stack_config" \
+  "${SCRIPT_PATH}" --env-file "${temp_dir}/.env" --infra-dir "${temp_dir}/infra" --report-dir "${temp_dir}/report-missing-mtls-stack-config"
+
+assert_file_contains "${temp_dir}/report-missing-mtls-stack-config/report.json" '"status": "needs_stack_bootstrap"'
+
+run_expect_exit_code 2 env \
+  PATH="${temp_dir}/bin:$PATH" \
+  COMMAND_LOG="${temp_dir}/commands.log" \
   SCENARIO="oidc_companion_missing" \
   "${SCRIPT_PATH}" --env-file "${temp_dir}/.env" --infra-dir "${temp_dir}/infra" --report-dir "${temp_dir}/report-oidc"
 
 assert_file_contains "${temp_dir}/report-oidc/report.json" '"oidcDiscovery"'
 assert_file_contains "${temp_dir}/report-oidc/report.json" '"status": "needs_oidc_companion"'
-assert_file_contains "${temp_dir}/report-oidc/report.json" '"repoConfigPresent": true'
-assert_file_contains "${temp_dir}/report-oidc/report.json" '"pagesProjectPresent": true'
-assert_file_contains "${temp_dir}/report-oidc/report.json" '"pagesDeploymentPresent": false'
-assert_file_contains "${temp_dir}/report-oidc/report.json" '"pagesDomainPresent": true'
 
 rm -rf "${temp_dir}/infra"
 mkdir -p "${temp_dir}/infra"
@@ -476,31 +558,6 @@ assert_log_contains "${temp_dir}/commands.log" "pulumi stack init devo --secrets
 assert_log_contains "${temp_dir}/commands.log" "pulumi stack init staging --secrets-provider awskms://alias/test-pulumi-secrets?region=us-east-1"
 assert_log_contains "${temp_dir}/commands.log" "pulumi stack init prod --secrets-provider awskms://alias/test-pulumi-secrets?region=us-west-2"
 assert_log_contains "${temp_dir}/commands.log" "gh workflow run rollout.yml --repo customer-org/customer-ltbase -f release_id=v9.9.9"
-
-: >"${temp_dir}/commands.log"
-run_expect_exit_code 0 env \
-  PATH="${temp_dir}/bin:$PATH" \
-  COMMAND_LOG="${temp_dir}/commands.log" \
-  SCENARIO="bootstrap_force" \
-  "${SCRIPT_PATH}" --env-file "${temp_dir}/.env" --infra-dir "${temp_dir}/infra" --scope foundation --force --release-id v4.0.0 --report-dir "${temp_dir}/report-force-foundation"
-
-assert_log_contains "${temp_dir}/report-force-foundation/actions.log" "render-bootstrap-policies.sh --env-file ${temp_dir}/.env"
-assert_log_contains "${temp_dir}/report-force-foundation/actions.log" "bootstrap-aws-foundation.sh --env-file ${temp_dir}/.env"
-if grep -Fq "create-deployment-repo.sh" "${temp_dir}/report-force-foundation/actions.log"; then
-  fail "foundation force should not create deployment repos"
-fi
-if grep -Fq "bootstrap-deployment-repo.sh" "${temp_dir}/report-force-foundation/actions.log"; then
-  fail "foundation force should not bootstrap deployment repos"
-fi
-if grep -Fq "bootstrap-oidc-discovery-companion.sh" "${temp_dir}/report-force-foundation/actions.log"; then
-  fail "foundation force should not bootstrap oidc companion"
-fi
-if grep -Fq "reconcile-managed-dsql-endpoint.sh" "${temp_dir}/report-force-foundation/actions.log"; then
-  fail "foundation force should not reconcile dsql"
-fi
-if grep -Fq "gh workflow run rollout" "${temp_dir}/report-force-foundation/actions.log"; then
-  fail "foundation force should not trigger rollout workflows"
-fi
 
 # Bug #20: force mode with rollout_mix should reconcile DSQL and resume rollout via rollout-hop
 for stack in devo staging prod; do

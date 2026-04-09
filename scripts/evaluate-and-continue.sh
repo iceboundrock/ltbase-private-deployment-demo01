@@ -61,7 +61,7 @@ script_dir="$(cd "$(dirname "$0")" && pwd)"
 source "${script_dir}/lib/bootstrap-env.sh"
 bootstrap_env_load "${ENV_FILE}"
 
-required_vars=(TEMPLATE_REPO GITHUB_OWNER DEPLOYMENT_REPO_NAME DEPLOYMENT_REPO_VISIBILITY DEPLOYMENT_REPO_DESCRIPTION DEPLOYMENT_REPO PULUMI_STATE_BUCKET PULUMI_KMS_ALIAS PULUMI_BACKEND_URL LTBASE_RELEASES_REPO LTBASE_RELEASE_ID LTBASE_RELEASES_TOKEN CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID OIDC_DISCOVERY_DOMAIN OIDC_DISCOVERY_TEMPLATE_REPO OIDC_DISCOVERY_REPO OIDC_DISCOVERY_PAGES_PROJECT GEMINI_API_KEY CLOUDFLARE_ZONE_ID GITHUB_ORG GITHUB_REPO GEMINI_MODEL DSQL_PORT DSQL_DB DSQL_USER DSQL_PROJECT_SCHEMA)
+required_vars=(TEMPLATE_REPO GITHUB_OWNER DEPLOYMENT_REPO_NAME DEPLOYMENT_REPO_VISIBILITY DEPLOYMENT_REPO_DESCRIPTION DEPLOYMENT_REPO PULUMI_STATE_BUCKET PULUMI_KMS_ALIAS PULUMI_BACKEND_URL LTBASE_RELEASES_REPO LTBASE_RELEASE_ID LTBASE_RELEASES_TOKEN CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID OIDC_DISCOVERY_DOMAIN OIDC_DISCOVERY_TEMPLATE_REPO OIDC_DISCOVERY_REPO OIDC_DISCOVERY_PAGES_PROJECT GEMINI_API_KEY CLOUDFLARE_ZONE_ID GITHUB_ORG GITHUB_REPO GEMINI_MODEL DSQL_PORT DSQL_DB DSQL_USER DSQL_PROJECT_SCHEMA MTLS_TRUSTSTORE_FILE MTLS_TRUSTSTORE_KEY)
 bootstrap_env_require_vars "${required_vars[@]}"
 while IFS= read -r stack; do
   bootstrap_env_require_stack_values "${stack}" AWS_REGION AWS_ACCOUNT_ID AWS_ROLE_NAME AWS_ROLE_ARN PULUMI_SECRETS_PROVIDER API_DOMAIN CONTROL_DOMAIN AUTH_DOMAIN PROJECT_ID AUTH_PROVIDER_CONFIG_FILE OIDC_DISCOVERY_AWS_ROLE_NAME OIDC_DISCOVERY_AWS_ROLE_ARN OIDC_ISSUER_URL JWKS_URL RUNTIME_BUCKET TABLE_NAME
@@ -199,51 +199,28 @@ repo_config_present() {
 }
 
 oidc_companion_repo_config_present() {
-  local variable_json secret_json
+  local variable_json
 
   if ! oidc_companion_repo_exists; then
     return 1
   fi
 
   variable_json="$(gh variable list --repo "${OIDC_DISCOVERY_REPO}" --json name)"
-  secret_json="$(gh secret list --repo "${OIDC_DISCOVERY_REPO}" --json name)"
-
-  for required_var in OIDC_DISCOVERY_DOMAIN OIDC_DISCOVERY_STACK_CONFIG CLOUDFLARE_ACCOUNT_ID OIDC_DISCOVERY_PAGES_PROJECT; do
-    if ! json_name_list_contains "${variable_json}" "${required_var}"; then
-      return 1
-    fi
-  done
-
-  if ! json_name_list_contains "${secret_json}" "CLOUDFLARE_API_TOKEN"; then
+  if ! json_name_list_contains "${variable_json}" "OIDC_DISCOVERY_DOMAIN"; then
+    return 1
+  fi
+  if ! json_name_list_contains "${variable_json}" "OIDC_DISCOVERY_STACK_CONFIG"; then
     return 1
   fi
 
   return 0
 }
 
-cloudflare_pages_project_json() {
+cloudflare_pages_project_present() {
   curl -fsS \
     -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
     -H "Content-Type: application/json" \
-    "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${OIDC_DISCOVERY_PAGES_PROJECT}"
-}
-
-cloudflare_pages_project_present() {
-  cloudflare_pages_project_json >/dev/null 2>&1
-}
-
-cloudflare_pages_deployment_present() {
-  local project_json
-
-  project_json="$(cloudflare_pages_project_json)" || return 1
-  printf '%s' "${project_json}" | python3 -c '
-import json
-import sys
-
-payload = json.load(sys.stdin)
-deployment = payload.get("result", {}).get("latest_deployment")
-sys.exit(0 if deployment is not None else 1)
-'
+    "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${OIDC_DISCOVERY_PAGES_PROJECT}" >/dev/null 2>&1
 }
 
 cloudflare_pages_domain_present() {
@@ -268,7 +245,6 @@ scan_oidc_discovery_state() {
   local repo_present="false"
   local repo_config_present="false"
   local pages_project_present="false"
-  local pages_deployment_present="false"
   local pages_domain_present="false"
   local roles_present="false"
   local status="needs_oidc_companion"
@@ -285,9 +261,6 @@ scan_oidc_discovery_state() {
     if cloudflare_pages_project_present; then
       pages_project_present="true"
     fi
-    if cloudflare_pages_deployment_present; then
-      pages_deployment_present="true"
-    fi
     if cloudflare_pages_domain_present; then
       pages_domain_present="true"
     fi
@@ -295,7 +268,7 @@ scan_oidc_discovery_state() {
       roles_present="true"
     fi
 
-    if [[ "${repo_present}" == "true" && "${repo_config_present}" == "true" && "${pages_project_present}" == "true" && "${pages_deployment_present}" == "true" && "${pages_domain_present}" == "true" && "${roles_present}" == "true" ]]; then
+    if [[ "${repo_present}" == "true" && "${repo_config_present}" == "true" && "${pages_project_present}" == "true" && "${pages_domain_present}" == "true" && "${roles_present}" == "true" ]]; then
       status="complete"
     fi
   fi
@@ -305,7 +278,6 @@ OIDC_DISCOVERY_STATUS=${status}
 OIDC_DISCOVERY_REPO_PRESENT=${repo_present}
 OIDC_DISCOVERY_REPO_CONFIG_PRESENT=${repo_config_present}
 OIDC_DISCOVERY_PAGES_PROJECT_PRESENT=${pages_project_present}
-OIDC_DISCOVERY_PAGES_DEPLOYMENT_PRESENT=${pages_deployment_present}
 OIDC_DISCOVERY_PAGES_DOMAIN_PRESENT=${pages_domain_present}
 OIDC_DISCOVERY_ROLES_PRESENT=${roles_present}
 EOF
@@ -324,7 +296,9 @@ stack_bootstrap_present() {
 
   (
     cd "${INFRA_DIR}"
-    "${stack_env[@]}" pulumi stack select "${stack}" >/dev/null 2>&1
+    "${stack_env[@]}" pulumi stack select "${stack}" >/dev/null 2>&1 || exit 1
+    "${stack_env[@]}" pulumi config get mtlsTruststoreFile --stack "${stack}" >/dev/null 2>&1 || exit 1
+    "${stack_env[@]}" pulumi config get mtlsTruststoreKey --stack "${stack}" >/dev/null 2>&1 || exit 1
   )
 }
 
@@ -398,14 +372,10 @@ scan_state() {
 
     if [[ "${shared_foundation_ok}" == "true" ]] && foundation_present_for_stack "${stack}" >/dev/null 2>&1; then
       foundation_ok="true"
-      if [[ "${SCOPE}" == "foundation" ]]; then
-        status="complete"
-      else
-        status="needs_repo_config"
-      fi
+      status="needs_repo_config"
     fi
 
-    if [[ "${SCOPE}" != "foundation" && "${foundation_ok}" == "true" && "${repo_present}" == "true" && "${repo_config_ok}" == "true" ]]; then
+    if [[ "${foundation_ok}" == "true" && "${repo_present}" == "true" && "${repo_config_ok}" == "true" ]]; then
       status="needs_stack_bootstrap"
       if stack_bootstrap_present "${stack}"; then
         if [[ "${SCOPE}" == "bootstrap" ]]; then
@@ -471,7 +441,6 @@ report = {
         "repoPresent": oidc_values.get("OIDC_DISCOVERY_REPO_PRESENT", "false") == "true",
         "repoConfigPresent": oidc_values.get("OIDC_DISCOVERY_REPO_CONFIG_PRESENT", "false") == "true",
         "pagesProjectPresent": oidc_values.get("OIDC_DISCOVERY_PAGES_PROJECT_PRESENT", "false") == "true",
-        "pagesDeploymentPresent": oidc_values.get("OIDC_DISCOVERY_PAGES_DEPLOYMENT_PRESENT", "false") == "true",
         "pagesDomainPresent": oidc_values.get("OIDC_DISCOVERY_PAGES_DOMAIN_PRESENT", "false") == "true",
         "rolesPresent": oidc_values.get("OIDC_DISCOVERY_ROLES_PRESENT", "false") == "true",
     },
@@ -488,9 +457,6 @@ PY
 has_non_complete_status() {
   if grep -Fv $'\tcomplete' "${state_file}" >/dev/null 2>&1; then
     return 0
-  fi
-  if [[ "${SCOPE}" == "foundation" ]]; then
-    return 1
   fi
   # shellcheck disable=SC1090
   source "${oidc_status_file}"
@@ -540,7 +506,7 @@ run_force_actions() {
     run_logged "${script_dir}/bootstrap-aws-foundation.sh" --env-file "${ENV_FILE}"
   fi
 
-  if [[ "${SCOPE}" != "foundation" && "${needs_repo}" == "true" ]]; then
+  if [[ "${needs_repo}" == "true" ]]; then
     if ! repo_exists; then
       run_logged "${script_dir}/create-deployment-repo.sh" --env-file "${ENV_FILE}"
     fi

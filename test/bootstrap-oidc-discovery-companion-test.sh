@@ -143,7 +143,7 @@ while [[ ${index} -lt ${#args[@]} ]]; do
     *)
       index=$((index + 1))
       ;;
-    esac
+  esac
 done
 
 body='{"success":true}'
