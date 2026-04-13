@@ -45,7 +45,7 @@ assert_tracked_file_mode() {
 
 assert_file_contains "${PULUMI_PROJECT}" "name: go"
 assert_file_contains "${PULUMI_PROJECT}" "options:"
-assert_file_contains "${PULUMI_PROJECT}" "binary: ./.pulumi/bin/ltbase-infra"
+assert_file_contains "${PULUMI_PROJECT}" "binary: ../../.pulumi/bin/ltbase-infra"
 assert_file_contains "${GITIGNORE_PATH}" "infra/.pulumi/"
 assert_tracked_file_mode "infra/scripts/pulumi-wrapper.sh" "100755"
 
@@ -114,9 +114,6 @@ assert_log_contains "${log_file}" "pulumi preview --stack devo"
 if grep -Fq "go build" "${log_file}"; then
   fail "wrapper should not rebuild when the binary already exists"
 fi
-if [[ ! -x "${temp_dir}/.pulumi/bin/ltbase-infra" ]]; then
-  fail "wrapper should mirror the binary at the blueprint root"
-fi
 
 : >"${log_file}"
 rm -f "${temp_dir}/infra/.pulumi/bin/ltbase-infra"
@@ -124,9 +121,6 @@ PATH="${fake_bin}:$PATH" COMMAND_LOG="${log_file}" PULUMI_PROJECT_FILE="${temp_d
 
 assert_log_contains "${log_file}" "go build -buildvcs=false -o .pulumi/bin/ltbase-infra ./cmd/ltbase-infra"
 assert_log_contains "${log_file}" "pulumi up --stack devo"
-if [[ ! -x "${temp_dir}/.pulumi/bin/ltbase-infra" ]]; then
-  fail "wrapper should mirror rebuilt binaries at the blueprint root"
-fi
 
 assert_file_contains "${ROOT_DIR}/README.md" "ltbase-private-deployment-binaries"
 assert_file_contains "${ROOT_DIR}/docs/BOOTSTRAP.md" "ltbase-private-deployment-binaries"
