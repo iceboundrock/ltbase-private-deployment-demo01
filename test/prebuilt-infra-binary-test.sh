@@ -69,6 +69,8 @@ log_file="${temp_dir}/commands.log"
 mkdir -p "${fake_bin}" "${temp_dir}/infra/.pulumi/bin" "${temp_dir}/infra/scripts"
 touch "${log_file}"
 
+cp "${PULUMI_PROJECT}" "${temp_dir}/infra/Pulumi.yaml"
+
 cat >"${fake_bin}/go" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -97,6 +99,8 @@ cat >"${fake_bin}/pulumi" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 printf 'pulumi %s\n' "$*" >>"${COMMAND_LOG}"
+printf 'pwd %s\n' "$(pwd)" >>"${COMMAND_LOG}"
+grep -F "binary:" "${PULUMI_PROJECT_FILE}" >>"${COMMAND_LOG}"
 EOF
 chmod +x "${fake_bin}/pulumi"
 
@@ -106,19 +110,23 @@ chmod +x "${temp_dir}/infra/scripts/pulumi-wrapper.sh"
 printf '#!/usr/bin/env bash\nexit 0\n' >"${temp_dir}/infra/.pulumi/bin/ltbase-infra"
 chmod +x "${temp_dir}/infra/.pulumi/bin/ltbase-infra"
 
-PATH="${fake_bin}:$PATH" COMMAND_LOG="${log_file}" "${temp_dir}/infra/scripts/pulumi-wrapper.sh" preview --stack devo
+PATH="${fake_bin}:$PATH" COMMAND_LOG="${log_file}" PULUMI_PROJECT_FILE="${temp_dir}/infra/Pulumi.yaml" "${temp_dir}/infra/scripts/pulumi-wrapper.sh" preview --stack devo
 
 assert_log_contains "${log_file}" "pulumi preview --stack devo"
+assert_log_contains "${log_file}" "binary: ${temp_dir}/infra/.pulumi/bin/ltbase-infra"
 if grep -Fq "go build" "${log_file}"; then
   fail "wrapper should not rebuild when the binary already exists"
 fi
+assert_file_contains "${temp_dir}/infra/Pulumi.yaml" "binary: ./.pulumi/bin/ltbase-infra"
 
 : >"${log_file}"
 rm -f "${temp_dir}/infra/.pulumi/bin/ltbase-infra"
-PATH="${fake_bin}:$PATH" COMMAND_LOG="${log_file}" "${temp_dir}/infra/scripts/pulumi-wrapper.sh" up --stack devo
+PATH="${fake_bin}:$PATH" COMMAND_LOG="${log_file}" PULUMI_PROJECT_FILE="${temp_dir}/infra/Pulumi.yaml" "${temp_dir}/infra/scripts/pulumi-wrapper.sh" up --stack devo
 
 assert_log_contains "${log_file}" "go build -buildvcs=false -o .pulumi/bin/ltbase-infra ./cmd/ltbase-infra"
 assert_log_contains "${log_file}" "pulumi up --stack devo"
+assert_log_contains "${log_file}" "binary: ${temp_dir}/infra/.pulumi/bin/ltbase-infra"
+assert_file_contains "${temp_dir}/infra/Pulumi.yaml" "binary: ./.pulumi/bin/ltbase-infra"
 
 assert_file_contains "${ROOT_DIR}/README.md" "ltbase-private-deployment-binaries"
 assert_file_contains "${ROOT_DIR}/docs/BOOTSTRAP.md" "ltbase-private-deployment-binaries"
