@@ -61,6 +61,7 @@ assert_file_contains "${WORKFLOW_PATH}" "ltbase-infra-bin-linux-amd64.tar.gz"
 assert_file_contains "${WORKFLOW_PATH}" "ltbase-infra-bin-linux-arm64.tar.gz"
 assert_file_contains "${WORKFLOW_PATH}" "manifest.json"
 assert_file_contains "${WORKFLOW_PATH}" "release_tag"
+assert_file_contains "${WORKFLOW_PATH}" "if: github.repository == 'Lychee-Technology/ltbase-private-deployment'"
 
 temp_dir="$(mktemp -d)"
 trap 'rm -rf "${temp_dir}"' EXIT
@@ -68,8 +69,6 @@ fake_bin="${temp_dir}/bin"
 log_file="${temp_dir}/commands.log"
 mkdir -p "${fake_bin}" "${temp_dir}/infra/.pulumi/bin" "${temp_dir}/infra/scripts"
 touch "${log_file}"
-
-cp "${PULUMI_PROJECT}" "${temp_dir}/infra/Pulumi.yaml"
 
 cat >"${fake_bin}/go" <<'EOF'
 #!/usr/bin/env bash
@@ -108,7 +107,7 @@ chmod +x "${temp_dir}/infra/scripts/pulumi-wrapper.sh"
 printf '#!/usr/bin/env bash\nexit 0\n' >"${temp_dir}/infra/.pulumi/bin/ltbase-infra"
 chmod +x "${temp_dir}/infra/.pulumi/bin/ltbase-infra"
 
-PATH="${fake_bin}:$PATH" COMMAND_LOG="${log_file}" PULUMI_PROJECT_FILE="${temp_dir}/infra/Pulumi.yaml" "${temp_dir}/infra/scripts/pulumi-wrapper.sh" preview --stack devo
+PATH="${fake_bin}:$PATH" COMMAND_LOG="${log_file}" "${temp_dir}/infra/scripts/pulumi-wrapper.sh" preview --stack devo
 
 assert_log_contains "${log_file}" "pulumi preview --stack devo"
 if grep -Fq "go build" "${log_file}"; then
@@ -117,7 +116,7 @@ fi
 
 : >"${log_file}"
 rm -f "${temp_dir}/infra/.pulumi/bin/ltbase-infra"
-PATH="${fake_bin}:$PATH" COMMAND_LOG="${log_file}" PULUMI_PROJECT_FILE="${temp_dir}/infra/Pulumi.yaml" "${temp_dir}/infra/scripts/pulumi-wrapper.sh" up --stack devo
+PATH="${fake_bin}:$PATH" COMMAND_LOG="${log_file}" "${temp_dir}/infra/scripts/pulumi-wrapper.sh" up --stack devo
 
 assert_log_contains "${log_file}" "go build -buildvcs=false -o .pulumi/bin/ltbase-infra ./cmd/ltbase-infra"
 assert_log_contains "${log_file}" "pulumi up --stack devo"
