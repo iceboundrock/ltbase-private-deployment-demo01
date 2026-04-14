@@ -62,6 +62,13 @@ assert_file_contains "${WORKFLOW_PATH}" "ltbase-infra-bin-linux-arm64.tar.gz"
 assert_file_contains "${WORKFLOW_PATH}" "manifest.json"
 assert_file_contains "${WORKFLOW_PATH}" "release_tag"
 assert_file_contains "${WORKFLOW_PATH}" "if: github.repository == 'Lychee-Technology/ltbase-private-deployment'"
+assert_file_contains "${WORKFLOW_PATH}" "build_fingerprint"
+
+PROVENANCE_PATH="${ROOT_DIR}/__ref__/template-provenance.json"
+assert_file_contains "${PROVENANCE_PATH}" '"template_repository": "Lychee-Technology/ltbase-private-deployment"'
+assert_file_contains "${PROVENANCE_PATH}" '"template_ref": "main"'
+assert_file_contains "${PROVENANCE_PATH}" '"template_commit":'
+assert_file_contains "${PROVENANCE_PATH}" '"build_fingerprint":'
 
 temp_dir="$(mktemp -d)"
 trap 'rm -rf "${temp_dir}"' EXIT
@@ -122,6 +129,10 @@ assert_log_contains "${log_file}" "go build -buildvcs=false -o .pulumi/bin/ltbas
 assert_log_contains "${log_file}" "pulumi up --stack devo"
 
 assert_file_contains "${ROOT_DIR}/README.md" "ltbase-private-deployment-binaries"
+assert_file_contains "${ROOT_DIR}/README.md" "template-provenance.json"
+assert_file_contains "${ROOT_DIR}/README.md" "build_fingerprint"
 assert_file_contains "${ROOT_DIR}/docs/BOOTSTRAP.md" "ltbase-private-deployment-binaries"
+assert_file_contains "${ROOT_DIR}/docs/BOOTSTRAP.md" "template-provenance.json"
+assert_file_contains "${ROOT_DIR}/docs/BOOTSTRAP.md" "build_fingerprint"
 
 printf 'PASS: prebuilt infra binary tests\n'
