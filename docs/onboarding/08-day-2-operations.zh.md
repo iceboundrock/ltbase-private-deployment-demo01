@@ -16,7 +16,7 @@
 
 preview workflow 与 rollout hop workflow 会在成功完成后自动运行这项审计；如果 Cloudflare 或 API Gateway 的 mTLS 配置发生漂移，工作流会直接失败。
 
-本地执行时，请保持 `.env` 与 `infra/Pulumi.<stack>.yaml` 一致。workflow 中的审计会从 `infra/Pulumi.<stack>.yaml` 读取 `ltbase-infra:cloudflareZoneId`，而你手动执行脚本时，脚本仍然要求你传入的 env 文件中包含 `CLOUDFLARE_ZONE_ID`。
+本地执行时，请保持 `.env` 与 `infra/Pulumi.<stack>.yaml` 一致。workflow 中的审计会从 `infra/Pulumi.<stack>.yaml` 读取 `ltbase-infra:awsRegion`、`ltbase-infra:apiDomain`、`ltbase-infra:controlPlaneDomain`、`ltbase-infra:authDomain`、`ltbase-infra:runtimeBucket` 和 `ltbase-infra:cloudflareZoneId`，而你手动执行脚本时，脚本仍然要求你传入的 env 文件中包含这些值。
 
 脚本会检查：
 

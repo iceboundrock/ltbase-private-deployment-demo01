@@ -1,8 +1,8 @@
 {
   "template_repository": "Lychee-Technology/ltbase-private-deployment",
   "template_ref": "main",
-  "template_commit": "db66d7ed5a29695cb4a737e3ff6ecfe5efc12a67",
+  "template_commit": "97661d63f515b99ff429cf23039ea135242c54a6",
   "build_fingerprint": "sha256:586d429fca776eba075f283cff57c5a3942adb1553d3e61afa012626d449f83b",
-  "generated_at": "2026-04-18T19:06:22Z",
+  "generated_at": "2026-04-18T21:53:53Z",
   "generator": "scripts/sync-template-upstream.sh"
 }

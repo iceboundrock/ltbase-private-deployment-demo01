@@ -96,7 +96,7 @@
   - 记住共享的 Pulumi backend bucket 会创建在 `PROMOTION_PATH` 第一个 stack 对应的 AWS 账户里，因此该 stack 的凭据必须能够创建和管理这个 bucket。
 - Cloudflare 输入值已经准备好。
   - 确认 `.env` 中的 `CLOUDFLARE_ACCOUNT_ID`、`CLOUDFLARE_ZONE_ID`、`CLOUDFLARE_API_TOKEN` 和 `OIDC_DISCOVERY_DOMAIN` 都已经定稿。
-  - 确认 bootstrap 已把同一个 zone ID 写入每个已部署 stack 的 `infra/Pulumi.<stack>.yaml`，对应键为 `ltbase-infra:cloudflareZoneId`；preview 与 rollout 的 mTLS audit 会读取这里保存的值。
+  - 确认 bootstrap 已把每个 stack 所需的 mTLS audit 输入写入 `infra/Pulumi.<stack>.yaml`，包括 `ltbase-infra:awsRegion`、各域名、`ltbase-infra:runtimeBucket` 和 `ltbase-infra:cloudflareZoneId`；preview 与 rollout 的 mTLS audit 会读取这里保存的值。
   - 确认该 token 可以管理 bootstrap 将创建的 OIDC discovery Cloudflare Pages 项目和自定义域名绑定。
   - 如果操作者账号或 token 不满足最小权限矩阵，请改用手动路径，而不是直接执行一键 bootstrap。
   - 确认该 zone 可以将 `api`、`auth`、`control-plane` 这些 hostname 通过 Cloudflare 代理出去。

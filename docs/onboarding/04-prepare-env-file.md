@@ -60,7 +60,7 @@ Use this guide to create the local `.env` file that drives the bootstrap scripts
      - `AUTH_PROVIDER_CONFIG_FILE_<STACK>`
      - `CLOUDFLARE_ZONE_ID`
      - Source: your final DNS plan in the target Cloudflare zone
-     - Bootstrap uses `CLOUDFLARE_ZONE_ID` from `.env` when it writes each `infra/Pulumi.<stack>.yaml` stack config. Preview and rollout mTLS audits then read the stored `ltbase-infra:cloudflareZoneId` value from that stack file.
+     - Bootstrap uses `CLOUDFLARE_ZONE_ID` from `.env` when it writes each `infra/Pulumi.<stack>.yaml` stack config. Preview and rollout mTLS audits then read `ltbase-infra:awsRegion`, `ltbase-infra:apiDomain`, `ltbase-infra:controlPlaneDomain`, `ltbase-infra:authDomain`, `ltbase-infra:runtimeBucket`, and `ltbase-infra:cloudflareZoneId` from that stack file.
      - For `AUTH_PROVIDER_CONFIG_FILE_<STACK>`, point to a checked-in JSON file that lists the external JWT providers enabled for that stack.
      - Start by copying `infra/auth-providers.<stack>.json.example` to `infra/auth-providers.<stack>.json`, then edit the real file in the generated customer deployment repository.
 10. Fill in application defaults:
@@ -91,7 +91,7 @@ These values are customer-controlled inputs and should usually be set explicitly
 - `LTBASE_RELEASES_REPO`, `LTBASE_RELEASE_ID`
 - `MTLS_TRUSTSTORE_FILE`, `MTLS_TRUSTSTORE_KEY` with the template defaults intact
 - `API_DOMAIN_<STACK>`, `CONTROL_DOMAIN_<STACK>`, `AUTH_DOMAIN_<STACK>`, `PROJECT_ID`, `AUTH_PROVIDER_CONFIG_FILE_<STACK>`, `CLOUDFLARE_ZONE_ID`
-  - `CLOUDFLARE_ZONE_ID` is still a manual bootstrap input in `.env`, but preview and rollout mTLS audits consume the per-stack `ltbase-infra:cloudflareZoneId` value stored in `infra/Pulumi.<stack>.yaml`.
+  - `CLOUDFLARE_ZONE_ID` is still a manual bootstrap input in `.env`, but preview and rollout mTLS audits consume per-stack values stored in `infra/Pulumi.<stack>.yaml`, including `ltbase-infra:cloudflareZoneId`, domains, `awsRegion`, and `runtimeBucket`.
 - `GEMINI_MODEL`, `DSQL_PORT`, `DSQL_DB`, `DSQL_USER`, `DSQL_PROJECT_SCHEMA`
 - `GEMINI_API_KEY`, `CLOUDFLARE_API_TOKEN`, `LTBASE_RELEASES_TOKEN`
 

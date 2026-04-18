@@ -48,7 +48,15 @@ assert_file_contains "${preview_workflow}" "./scripts/publish-schemas.sh --dry-r
 assert_file_contains "${preview_workflow}" "name: Audit Cloudflare mTLS"
 assert_file_contains "${preview_workflow}" "./scripts/check-cloudflare-mtls.sh --env-file .github/mTLS-audit.env --stack"
 assert_file_contains "${preview_workflow}" 'stack_file="infra/Pulumi.${{ needs.prepare.outputs.target_stack }}.yaml"'
-assert_file_contains "${preview_workflow}" "cloudflare_zone_id=\"\$(grep -F '  ltbase-infra:cloudflareZoneId:' \"\${stack_file}\" | head -n 1 | cut -d ':' -f 3- | sed 's/^[[:space:]]*//')\""
+assert_file_contains "${preview_workflow}" 'extract_stack_value() {'
+assert_file_contains "${preview_workflow}" 'raw_line="$(grep -E "^[[:space:]]*${config_key}:[[:space:]]*" "${stack_file}" | head -n 1 || true)"'
+assert_file_contains "${preview_workflow}" 'aws_region="$(extract_stack_value "ltbase-infra:awsRegion")"'
+assert_file_contains "${preview_workflow}" 'api_domain="$(extract_stack_value "ltbase-infra:apiDomain")"'
+assert_file_contains "${preview_workflow}" 'control_domain="$(extract_stack_value "ltbase-infra:controlPlaneDomain")"'
+assert_file_contains "${preview_workflow}" 'auth_domain="$(extract_stack_value "ltbase-infra:authDomain")"'
+assert_file_contains "${preview_workflow}" 'runtime_bucket="$(extract_stack_value "ltbase-infra:runtimeBucket")"'
+assert_file_contains "${preview_workflow}" 'cloudflare_zone_id="$(extract_stack_value "ltbase-infra:cloudflareZoneId")"'
+assert_file_contains "${preview_workflow}" 'Required mTLS audit values missing from ${stack_file}'
 assert_file_contains "${preview_workflow}" 'Cloudflare zone ID missing from ${stack_file}'
 assert_file_contains "${rollout_hop_workflow}" "Lychee-Technology/ltbase-deploy-workflows/.github/workflows/rollout-hop.yml@main"
 
@@ -95,7 +103,15 @@ assert_file_contains "${rollout_hop_workflow}" 'if: ${{ always() && needs.ensure
 assert_file_contains "${rollout_hop_workflow}" "- ensure_project"
 assert_file_contains "${rollout_hop_workflow}" "if: \${{ always() && needs.ensure_project.result == 'success' && needs.prepare.outputs.continue_chain == 'true' && needs.prepare.outputs.next_stack != '' }}"
 assert_file_contains "${rollout_hop_workflow}" 'stack_file="infra/Pulumi.${{ needs.prepare.outputs.target_stack }}.yaml"'
-assert_file_contains "${rollout_hop_workflow}" "cloudflare_zone_id=\"\$(grep -F '  ltbase-infra:cloudflareZoneId:' \"\${stack_file}\" | head -n 1 | cut -d ':' -f 3- | sed 's/^[[:space:]]*//')\""
+assert_file_contains "${rollout_hop_workflow}" 'extract_stack_value() {'
+assert_file_contains "${rollout_hop_workflow}" 'raw_line="$(grep -E "^[[:space:]]*${config_key}:[[:space:]]*" "${stack_file}" | head -n 1 || true)"'
+assert_file_contains "${rollout_hop_workflow}" 'aws_region="$(extract_stack_value "ltbase-infra:awsRegion")"'
+assert_file_contains "${rollout_hop_workflow}" 'api_domain="$(extract_stack_value "ltbase-infra:apiDomain")"'
+assert_file_contains "${rollout_hop_workflow}" 'control_domain="$(extract_stack_value "ltbase-infra:controlPlaneDomain")"'
+assert_file_contains "${rollout_hop_workflow}" 'auth_domain="$(extract_stack_value "ltbase-infra:authDomain")"'
+assert_file_contains "${rollout_hop_workflow}" 'runtime_bucket="$(extract_stack_value "ltbase-infra:runtimeBucket")"'
+assert_file_contains "${rollout_hop_workflow}" 'cloudflare_zone_id="$(extract_stack_value "ltbase-infra:cloudflareZoneId")"'
+assert_file_contains "${rollout_hop_workflow}" 'Required mTLS audit values missing from ${stack_file}'
 assert_file_contains "${rollout_hop_workflow}" 'Cloudflare zone ID missing from ${stack_file}'
 assert_file_contains "${rollout_hop_workflow}" "MTLS_TRUSTSTORE_KEY: mtls/cloudflare-origin-pull-ca.pem"
 assert_file_contains "${rollout_hop_workflow}" "reconcile_managed_dsql_endpoint: true"
