@@ -111,6 +111,7 @@ func authServiceKMSAliasName(cfg config.StackConfig) string {
 
 func NewLambdaServices(ctx *pulumi.Context, cfg config.StackConfig, runtime *RuntimeResources, providers Providers) (*ServiceSet, error) {
 	release := artifact.NewRelease(cfg.ReleaseID, cfg.ReleaseAssetDir)
+	commonEnv := commonLambdaEnv(cfg, runtime.Table.Name, runtime.RuntimeBucket.Bucket)
 	providerCfg, err := loadAuthProviderConfig(ctx.RootDirectory(), cfg.AuthProviderConfigFile)
 	if err != nil {
 		return nil, err
@@ -155,16 +156,17 @@ func NewLambdaServices(ctx *pulumi.Context, cfg config.StackConfig, runtime *Run
 	if err != nil {
 		return nil, err
 	}
-	formaEnv := formaCDCLambdaEnv(cfg, runtime.Table.Name, runtime.RuntimeBucket.Bucket, runtime.SchemaBucket.Bucket)
+	formaEnv := mergeEnv(commonEnv, pulumi.StringMap{
+		"FORMA_CDC_S3_REGION": pulumi.String(cfg.AWSRegion),
+	})
 	formaCdc, err := newLambdaService(ctx, cfg, providers, lambdaSpec{
-		Name:            "forma-cdc",
-		ArtifactPath:    release.FormaCdcZip,
-		Memory:          2048,
-		Timeout:         300,
-		AliasName:       naming.AliasName(cfg.Stack),
-		Env:             formaEnv,
-		AllowKMS:        false,
-		AllowSchemaRead: true,
+		Name:         "forma-cdc",
+		ArtifactPath: release.FormaCdcZip,
+		Memory:       2048,
+		Timeout:      300,
+		AliasName:    naming.AliasName(cfg.Stack),
+		Env:          formaEnv,
+		AllowKMS:     false,
 	}, runtime)
 	if err != nil {
 		return nil, err
@@ -197,12 +199,6 @@ func controlPlaneLambdaEnv(cfg config.StackConfig, tableName pulumi.StringInput,
 		"PROJECT_NAME": pulumi.String(cfg.DeploymentProjectName),
 		"ACCOUNT_ID":   pulumi.String(cfg.DeploymentAWSAccountID),
 		"API_BASE_URL": pulumi.String(APIBaseURL(cfg)),
-	})
-}
-
-func formaCDCLambdaEnv(cfg config.StackConfig, tableName pulumi.StringInput, bucketName pulumi.StringInput, schemaBucket pulumi.StringInput) pulumi.StringMap {
-	return mergeEnv(commonLambdaEnv(cfg, tableName, bucketName), schemaLambdaEnv(schemaBucket, pulumi.String(schemaAppliedPrefix)), pulumi.StringMap{
-		"FORMA_CDC_S3_REGION": pulumi.String(cfg.AWSRegion),
 	})
 }
 

@@ -202,15 +202,6 @@ PY
 )"
 assert_equals "${version}" "${release_version}"
 
-if ! output="$(PATH="${fake_bin}:$PATH" COMMAND_LOG="${log_file}" FAKE_S3_ROOT="${bucket_dir}" PUBLISH_SCHEMAS_GENERATED_AT="2026-04-18T00:00:00Z" "${SCRIPT_PATH}" --schema-bucket default-schema-bucket 2>&1)"; then
-  fail "expected publish-schemas.sh to use repo-owned customer schemas by default, got: ${output}"
-fi
-
-default_manifest_path="${bucket_dir}/default-schema-bucket/schemas/published/manifest.json"
-assert_file_exists "${default_manifest_path}"
-assert_file_contains "${default_manifest_path}" '"generated_at": "2026-04-18T00:00:00Z"'
-assert_file_contains "${default_manifest_path}" 'lead.json'
-
 cat >"${invalid_schema}" <<'EOF'
 {
   "name": "broken",
