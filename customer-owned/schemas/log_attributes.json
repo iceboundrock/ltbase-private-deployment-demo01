@@ -1,0 +1,67 @@
+{
+  "createdAt": {
+    "attributeID": 1,
+    "valueType": "date",
+    "required_policy": "required_always"
+  },
+  "createdBy": {
+    "attributeID": 12,
+    "valueType": "text",
+    "column_binding": {"col_name":"ltbase_created_by"}
+  },
+  "data": {
+    "attributeID": 11,
+    "valueType": "text"
+  },
+  "id": {
+    "attributeID": 3,
+    "valueType": "text",
+    "column_binding": {"col_name":"text_01"},
+    "required_policy": "required_always"
+  },
+  "leadId": {
+    "attributeID": 4,
+    "valueType": "text",
+    "column_binding": {"col_name":"uuid_02"}
+  },
+  "noteId": {
+    "attributeID": 5,
+    "valueType": "text"
+  },
+  "ownerId": {
+    "attributeID": 6,
+    "valueType": "text",
+    "required_policy": "required_always"
+  },
+  "ownerTeam": {
+    "attributeID": 13,
+    "valueType": "text"
+  },
+  "summary": {
+    "attributeID": 7,
+    "valueType": "text"
+  },
+  "type": {
+    "attributeID": 8,
+    "valueType": "text",
+    "required_policy": "required_always"
+  },
+  "updatedAt": {
+    "attributeID": 9,
+    "valueType": "date"
+  },
+  "updatedBy": {
+    "attributeID": 14,
+    "valueType": "text",
+    "column_binding": {"col_name":"ltbase_updated_by"}
+  },
+  "deletedBy": {
+    "attributeID": 15,
+    "valueType": "text"
+  },
+  "visitId": {
+    "attributeID": 10,
+    "valueType": "text",
+    "column_binding": {"col_name":"uuid_01"}
+  }
+}
