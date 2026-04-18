@@ -113,6 +113,22 @@ func TestControlPlaneLambdaEnvIncludesBootstrapProjectConfig(t *testing.T) {
 	}
 }
 
+func TestFormaCDCLambdaEnvIncludesSchemaSourceContract(t *testing.T) {
+	env := formaCDCLambdaEnv(config.StackConfig{
+		AWSRegion:         "ap-northeast-1",
+		DSQLPort:          "5432",
+		DSQLDB:            "postgres",
+		DSQLUser:          "admin",
+		DSQLProjectSchema: "ltbase",
+	}, pulumi.String("table-name"), pulumi.String("runtime-bucket"), pulumi.String("schema-bucket"))
+
+	for _, key := range []string{"FORMA_CDC_S3_REGION", "FORMA_SCHEMA_SOURCE", "FORMA_SCHEMA_BUCKET", "FORMA_SCHEMA_PREFIX", "FORMA_SCHEMA_PUBLISHED_PREFIX", "FORMA_SCHEMA_CACHE_DIR"} {
+		if _, ok := env[key]; !ok {
+			t.Fatalf("formaCDCLambdaEnv() missing %s", key)
+		}
+	}
+}
+
 func TestRuntimeResourcesCanCarryBucketVersioningHandle(t *testing.T) {
 	runtime := RuntimeResources{}
 	if runtime.RuntimeBucketVersioning != nil {
