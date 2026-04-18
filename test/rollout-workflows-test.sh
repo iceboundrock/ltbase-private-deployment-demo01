@@ -47,7 +47,9 @@ assert_file_contains "${preview_workflow}" "name: Validate customer schemas"
 assert_file_contains "${preview_workflow}" "./scripts/publish-schemas.sh --dry-run --schema-bucket"
 assert_file_contains "${preview_workflow}" "name: Audit Cloudflare mTLS"
 assert_file_contains "${preview_workflow}" "./scripts/check-cloudflare-mtls.sh --env-file .github/mTLS-audit.env --stack"
-assert_file_contains "${preview_workflow}" 'CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}'
+assert_file_contains "${preview_workflow}" 'stack_file="infra/Pulumi.${{ needs.prepare.outputs.target_stack }}.yaml"'
+assert_file_contains "${preview_workflow}" "cloudflare_zone_id=\"\$(grep -F '  ltbase-infra:cloudflareZoneId:' \"\${stack_file}\" | head -n 1 | cut -d ':' -f 3- | sed 's/^[[:space:]]*//')\""
+assert_file_contains "${preview_workflow}" 'Cloudflare zone ID missing from ${stack_file}'
 assert_file_contains "${rollout_hop_workflow}" "Lychee-Technology/ltbase-deploy-workflows/.github/workflows/rollout-hop.yml@main"
 
 assert_file_contains "${deploy_workflow}" "uses: ./.github/workflows/rollout-hop.yml"
@@ -92,7 +94,9 @@ assert_file_contains "${rollout_hop_workflow}" "needs.publish_schemas.result == 
 assert_file_contains "${rollout_hop_workflow}" 'if: ${{ always() && needs.ensure_project.result == '\''success'\'' }}'
 assert_file_contains "${rollout_hop_workflow}" "- ensure_project"
 assert_file_contains "${rollout_hop_workflow}" "if: \${{ always() && needs.ensure_project.result == 'success' && needs.prepare.outputs.continue_chain == 'true' && needs.prepare.outputs.next_stack != '' }}"
-assert_file_contains "${rollout_hop_workflow}" 'CLOUDFLARE_ZONE_ID: ${{ vars.CLOUDFLARE_ZONE_ID }}'
+assert_file_contains "${rollout_hop_workflow}" 'stack_file="infra/Pulumi.${{ needs.prepare.outputs.target_stack }}.yaml"'
+assert_file_contains "${rollout_hop_workflow}" "cloudflare_zone_id=\"\$(grep -F '  ltbase-infra:cloudflareZoneId:' \"\${stack_file}\" | head -n 1 | cut -d ':' -f 3- | sed 's/^[[:space:]]*//')\""
+assert_file_contains "${rollout_hop_workflow}" 'Cloudflare zone ID missing from ${stack_file}'
 assert_file_contains "${rollout_hop_workflow}" "MTLS_TRUSTSTORE_KEY: mtls/cloudflare-origin-pull-ca.pem"
 assert_file_contains "${rollout_hop_workflow}" "reconcile_managed_dsql_endpoint: true"
 assert_file_not_contains "${rollout_hop_workflow}" "pulumi_stack: devo"
