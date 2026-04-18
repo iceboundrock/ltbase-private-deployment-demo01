@@ -3,6 +3,6 @@
   "template_ref": "main",
   "template_commit": "0306978a69dddad171b2ee5fee48577cee20d42c",
   "build_fingerprint": "sha256:586d429fca776eba075f283cff57c5a3942adb1553d3e61afa012626d449f83b",
-  "generated_at": "2026-04-18T22:11:38Z",
+  "generated_at": "2026-04-18T23:42:53Z",
   "generator": "scripts/sync-template-upstream.sh"
 }
