@@ -1,0 +1,122 @@
+{
+  "actualEndAt": {
+    "attributeID": 1,
+    "valueType": "date"
+  },
+  "actualStartAt": {
+    "attributeID": 2,
+    "valueType": "date"
+  },
+  "attendees": {
+    "attributeID": 3,
+    "valueType": "text"
+  },
+  "contactSnapshot": {
+    "attributeID": 25,
+    "valueType": "text"
+  },
+  "contactSnapshot.name": {
+    "attributeID": 21,
+    "valueType": "text"
+  },
+  "contactSnapshot.nameKana": {
+    "attributeID": 22,
+    "valueType": "text"
+  },
+  "contactSnapshot.nameNative": {
+    "attributeID": 23,
+    "valueType": "text"
+  },
+  "contactSnapshot.primaryPhone": {
+    "attributeID": 24,
+    "valueType": "text"
+  },
+  "createdAt": {
+    "attributeID": 4,
+    "valueType": "date"
+  },
+  "createdBy": {
+    "attributeID": 26,
+    "valueType": "text",
+    "column_binding": {"col_name":"ltbase_created_by"}
+  },
+  "feedback": {
+    "attributeID": 5,
+    "valueType": "text"
+  },
+  "id": {
+    "attributeID": 6,
+    "valueType": "text",
+    "required_policy": "required_always"
+  },
+  "leadId": {
+    "attributeID": 7,
+    "valueType": "text",
+    "required_policy": "required_always"
+  },
+  "nextFollowUpAt": {
+    "attributeID": 9,
+    "valueType": "date"
+  },
+  "ownerTeam": {
+    "attributeID": 27,
+    "valueType": "text"
+  },
+  "propertyId": {
+    "attributeID": 10,
+    "valueType": "text",
+    "required_policy": "required_always"
+  },
+  "propertySnapshot.address": {
+    "attributeID": 11,
+    "valueType": "text"
+  },
+  "propertySnapshot.code": {
+    "attributeID": 12,
+    "valueType": "text"
+  },
+  "propertySnapshot.price": {
+    "attributeID": 13,
+    "valueType": "numeric"
+  },
+  "propertySnapshot.rent": {
+    "attributeID": 14,
+    "valueType": "numeric"
+  },
+  "propertySnapshot.title": {
+    "attributeID": 15,
+    "valueType": "text"
+  },
+  "scheduledEndAt": {
+    "attributeID": 16,
+    "valueType": "date"
+  },
+  "scheduledStartAt": {
+    "attributeID": 17,
+    "valueType": "date",
+    "required_policy": "required_always"
+  },
+  "status": {
+    "attributeID": 18,
+    "valueType": "text",
+    "required_policy": "required_always"
+  },
+  "updatedAt": {
+    "attributeID": 19,
+    "valueType": "date"
+  },
+  "updatedBy": {
+    "attributeID": 28,
+    "valueType": "text",
+    "column_binding": {"col_name":"ltbase_updated_by"}
+  },
+  "deletedBy": {
+    "attributeID": 29,
+    "valueType": "text"
+  },
+  "userId": {
+    "attributeID": 20,
+    "valueType": "text",
+    "required_policy": "required_always"
+  }
+}
