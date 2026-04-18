@@ -95,7 +95,8 @@ Before you run any bootstrap automation, confirm all of the following:
   - Test each account access before bootstrap, for example `AWS_PROFILE_STAGING=customer-staging aws sts get-caller-identity`.
   - Remember that the shared Pulumi backend bucket is created in the AWS account for the first stack in `PROMOTION_PATH`, so the credentials for that stack must be able to create and manage the bucket.
 - Cloudflare inputs are ready.
-  - Confirm `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_API_TOKEN`, and `OIDC_DISCOVERY_DOMAIN` are final.
+  - Confirm `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_ZONE_ID`, `CLOUDFLARE_API_TOKEN`, and `OIDC_DISCOVERY_DOMAIN` are final in `.env` before bootstrap.
+  - Confirm bootstrap has written the same zone ID into each deployed stack file as `ltbase-infra:cloudflareZoneId` in `infra/Pulumi.<stack>.yaml`, because preview and rollout mTLS audits read that stored stack config value.
   - Confirm the token can manage the Pages project and custom domain that bootstrap creates for OIDC discovery.
   - If the operator account or token does not meet the minimum permission matrix, use the manual path instead of one-click bootstrap.
   - Confirm the zone can proxy the `api`, `auth`, and `control-plane` hostnames through Cloudflare.
