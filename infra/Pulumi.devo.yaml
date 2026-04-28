@@ -21,7 +21,7 @@ config:
   ltbase-infra:dsqlProjectSchema: ltbase
   ltbase-infra:geminiModel: gemini-3-flash-preview
   ltbase-infra:geminiApiKey:
-    secure: v1:S4Dy3QaoxIOnPa07:dkGj+Ccqq156eiI2J7pKg1GuG6kDZPPeoD2sXrtwmn0gNgamHXs19DhILRra0fBtc7V8hUo7HA==
+    secure: v1:tqheJu38PsVzkq5x:K38gMovu2CddOk+N7UuWhqDLtPhQj9AzTkLjDmzw4NImmpg6I1w1yT9fO/NcwmPh0MQkzWtfCg==
   ltbase-infra:githubOidcProviderArn: arn:aws:iam::009853298710:oidc-provider/token.actions.githubusercontent.com
   ltbase-infra:deploymentAwsAccountId: "009853298710"
   ltbase-infra:projectId: d6ca77fc-176e-4ba8-8a5a-68ce81d3c7bd
