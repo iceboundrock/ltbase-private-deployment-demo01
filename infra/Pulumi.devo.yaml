@@ -19,9 +19,9 @@ config:
   ltbase-infra:dsqlDB: postgres
   ltbase-infra:dsqlUser: admin
   ltbase-infra:dsqlProjectSchema: ltbase
-  ltbase-infra:geminiModel: gemini-3-flash-preview
+  ltbase-infra:geminiModel: gemma-4-31b-it
   ltbase-infra:geminiApiKey:
-    secure: v1:Bz0Q9YfoJAvoPc/e:JiK7F6gWs1yXBjIGiPbqPLzh3gY+XAp7b0e/ynJxLDCuOl8n1HyE2iSP/kw6xp307oKeF9nQgQ==
+    secure: v1:BrtcSS63FFsTzVom:wKbhtGx+4n02UYUmSOk85rlDzbrAioXf3ro6ew1lLt16vl2qaUiXWkwNv2axblCTaG7MH8iUcg==
   ltbase-infra:githubOidcProviderArn: arn:aws:iam::009853298710:oidc-provider/token.actions.githubusercontent.com
   ltbase-infra:deploymentAwsAccountId: "009853298710"
   ltbase-infra:projectId: d6ca77fc-176e-4ba8-8a5a-68ce81d3c7bd
