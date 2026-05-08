@@ -21,7 +21,7 @@ config:
   ltbase-infra:dsqlProjectSchema: ltbase
   ltbase-infra:geminiModel: gemma-4-31b-it
   ltbase-infra:geminiApiKey:
-    secure: v1:BrtcSS63FFsTzVom:wKbhtGx+4n02UYUmSOk85rlDzbrAioXf3ro6ew1lLt16vl2qaUiXWkwNv2axblCTaG7MH8iUcg==
+    secure: v1:z/cPWMYOQQWzcbXA:m6oG3ajpFjVoSq/4gBHolHh0G8Nf+PZyK6xc2SAsMnVjRCl6ltALH1odv2sdr+1ZHS8GNsw6Yw==
   ltbase-infra:githubOidcProviderArn: arn:aws:iam::009853298710:oidc-provider/token.actions.githubusercontent.com
   ltbase-infra:deploymentAwsAccountId: "009853298710"
   ltbase-infra:projectId: d6ca77fc-176e-4ba8-8a5a-68ce81d3c7bd
