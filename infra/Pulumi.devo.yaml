@@ -14,16 +14,24 @@ config:
   ltbase-infra:jwksUrl: https://ltbase-demo01-oidc.ltbase.dev/devo/.well-known/jwks.json
   ltbase-infra:githubOrg: iceboundrock
   ltbase-infra:githubRepo: ltbase-private-deployment-demo01
-  ltbase-infra:releaseId: v1.0.0
+  ltbase-infra:releaseId: v1.0.23
   ltbase-infra:dsqlPort: "5432"
   ltbase-infra:dsqlDB: postgres
   ltbase-infra:dsqlUser: admin
   ltbase-infra:dsqlProjectSchema: ltbase
   ltbase-infra:geminiModel: gemini-3.1-flash-lite
   ltbase-infra:geminiApiKey:
-    secure: v1:9fYObGKKiHdOcSJp:aj10DOpZfrYpekvnfwl7N8RjuE9rjAbogKtzefAjyUbjPy52yLC9syZ1em+h0Cdv4/xF9G4wsA==
+    secure: v1:8XCkCpAH5lUw052j:6i5rWu2moPuQ1b2f1OckNdNth5bWnIe15aOEwkYYDbnUWM58KhdXBaRdYkut8kYnk4O9FTvLrg==
   ltbase-infra:githubOidcProviderArn: arn:aws:iam::009853298710:oidc-provider/token.actions.githubusercontent.com
   ltbase-infra:deploymentAwsAccountId: "009853298710"
   ltbase-infra:projectId: d6ca77fc-176e-4ba8-8a5a-68ce81d3c7bd
   ltbase-infra:authProviderConfigFile: infra/auth-providers.devo.json
   ltbase-infra:schemaBucket: ltbase-private-deployment-demo01-schema-devo
+  ltbase-infra:controlPlaneCorsOrigins: https://demo01-admin.ltbase.dev
+  ltbase-infra:apiCorsAllowOrigins: '*'
+  ltbase-infra:authCorsAllowOrigins: '*'
+  ltbase-infra:controlPlaneCorsAllowOrigins: https://demo01-admin.ltbase.dev
+  ltbase-infra:firebaseApiKey: AIzaSyBw4FAvI8nXr1bF_eWHgOH4SYGJRi6z4BI
+  ltbase-infra:firebaseProjectId: arched-symbol-326108
+  ltbase-infra:supabaseUrl: ""
+  ltbase-infra:supabaseAnonKey: ""

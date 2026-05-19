@@ -24,6 +24,7 @@ mkdir -p "${temp_dir}/infra"
 
 cat >"${temp_dir}/infra/Pulumi.devo.yaml" <<'EOF'
 config:
+  ltbase-infra:awsRegion: ap-northeast-1
   ltbase-infra:deploymentAwsAccountId: "123456789012"
   ltbase-infra:runtimeBucket: example-runtime
   ltbase-infra:schemaBucket: example-schema
@@ -32,9 +33,14 @@ config:
   ltbase-infra:mtlsTruststoreKey: mtls/cloudflare-origin-pull-ca.pem
   ltbase-infra:apiDomain: api.example.com
   ltbase-infra:controlPlaneDomain: control.example.com
+  ltbase-infra:controlPlaneCorsOrigins: https://admin.example.com
   ltbase-infra:authDomain: auth.example.com
   ltbase-infra:projectId: 11111111-1111-4111-8111-111111111111
   ltbase-infra:authProviderConfigFile: infra/auth-providers.devo.json
+  ltbase-infra:firebaseApiKey: public-firebase-key-devo
+  ltbase-infra:firebaseProjectId: firebase-project-devo
+  ltbase-infra:supabaseUrl: https://devo-project.supabase.co
+  ltbase-infra:supabaseAnonKey: public-supabase-key-devo
   ltbase-infra:cloudflareZoneId: zone-123
   ltbase-infra:oidcIssuerUrl: https://issuer.example.com/devo
   ltbase-infra:jwksUrl: https://issuer.example.com/devo/.well-known/jwks.json
@@ -63,7 +69,7 @@ if output="$(${SCRIPT_PATH} --stack devo --infra-dir "${temp_dir}/infra" 2>&1)";
 fi
 
 assert_contains "${output}" "Missing required Pulumi config key 'ltbase-infra:schemaBucket'"
-assert_contains "${output}" "infra/Pulumi.devo.yaml"
+assert_contains "${output}" "${temp_dir}/infra/Pulumi.devo.yaml"
 
 python3 - <<'PY' "${temp_dir}/infra/Pulumi.devo.yaml"
 from pathlib import Path
@@ -88,7 +94,71 @@ if output="$(${SCRIPT_PATH} --stack devo --infra-dir "${temp_dir}/infra" 2>&1)";
 fi
 
 assert_contains "${output}" "Missing required Pulumi config key 'ltbase-infra:deploymentAwsAccountId'"
-assert_contains "${output}" "infra/Pulumi.devo.yaml"
+assert_contains "${output}" "${temp_dir}/infra/Pulumi.devo.yaml"
+
+python3 - <<'PY' "${temp_dir}/infra/Pulumi.devo.yaml"
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+path.write_text(path.read_text().replace('  ltbase-infra:awsRegion: ap-northeast-1\n', ''))
+PY
+
+if output="$(${SCRIPT_PATH} --stack devo --infra-dir "${temp_dir}/infra" 2>&1)"; then
+  fail "expected failure when awsRegion is missing"
+fi
+
+assert_contains "${output}" "Missing required Pulumi config key 'ltbase-infra:awsRegion'"
+assert_contains "${output}" "${temp_dir}/infra/Pulumi.devo.yaml"
+
+python3 - <<'PY' "${temp_dir}/infra/Pulumi.devo.yaml"
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+marker = 'config:\n'
+path.write_text(text.replace(marker, marker + '  ltbase-infra:awsRegion: ap-northeast-1\n  ltbase-infra:deploymentAwsAccountId: "123456789012"\n', 1))
+PY
+
+python3 - <<'PY' "${temp_dir}/infra/Pulumi.devo.yaml"
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+path.write_text(path.read_text().replace('  ltbase-infra:controlPlaneCorsOrigins: https://admin.example.com\n', ''))
+PY
+
+if output="$(${SCRIPT_PATH} --stack devo --infra-dir "${temp_dir}/infra" 2>&1)"; then
+  fail "expected failure when controlPlaneCorsOrigins is missing"
+fi
+
+assert_contains "${output}" "Missing required Pulumi config key 'ltbase-infra:controlPlaneCorsOrigins'"
+assert_contains "${output}" "${temp_dir}/infra/Pulumi.devo.yaml"
+
+python3 - <<'PY' "${temp_dir}/infra/Pulumi.devo.yaml"
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text()
+path.write_text(text.replace('  ltbase-infra:authDomain: auth.example.com\n', '  ltbase-infra:controlPlaneCorsOrigins: https://admin.example.com\n  ltbase-infra:authDomain: auth.example.com\n', 1))
+PY
+
+python3 - <<'PY' "${temp_dir}/infra/Pulumi.devo.yaml"
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+path.write_text(path.read_text().replace('  ltbase-infra:firebaseApiKey: public-firebase-key-devo\n', ''))
+PY
+
+if output="$(${SCRIPT_PATH} --stack devo --infra-dir "${temp_dir}/infra" 2>&1)"; then
+  fail "expected failure when firebaseApiKey is missing"
+fi
+
+assert_contains "${output}" "Missing required Pulumi config key 'ltbase-infra:firebaseApiKey'"
+assert_contains "${output}" "${temp_dir}/infra/Pulumi.devo.yaml"
 
 rm -f "${temp_dir}/infra/Pulumi.devo.yaml"
 
@@ -97,6 +167,6 @@ if output="$(${SCRIPT_PATH} --stack devo --infra-dir "${temp_dir}/infra" 2>&1)";
 fi
 
 assert_contains "${output}" "Missing Pulumi stack file"
-assert_contains "${output}" "infra/Pulumi.devo.yaml"
+assert_contains "${output}" "${temp_dir}/infra/Pulumi.devo.yaml"
 
 printf 'PASS: check Pulumi stack config tests\n'

@@ -47,6 +47,7 @@ GITHUB_OWNER=customer-org
 DEPLOYMENT_REPO_NAME=customer-ltbase
 DEPLOYMENT_REPO_VISIBILITY=private
 DEPLOYMENT_REPO_DESCRIPTION="Customer LTBase deployment repo"
+CONTROLPLANE_UI_DOMAIN=admin.customer.example.com
 AWS_REGION_DEVO=ap-northeast-1
 AWS_REGION_STAGING=us-east-1
 AWS_REGION_PROD=us-west-2
@@ -78,6 +79,18 @@ AUTH_PROVIDER_CONFIG_FILE_DEVO=infra/auth-providers.devo.json
 AUTH_PROVIDER_CONFIG_FILE_STAGING=infra/auth-providers.staging.json
 AUTH_PROVIDER_CONFIG_FILE_PROD=infra/auth-providers.prod.json
 CLOUDFLARE_ZONE_ID=zone-123
+FIREBASE_API_KEY_DEVO=public-firebase-key-devo
+FIREBASE_API_KEY_STAGING=public-firebase-key-staging
+FIREBASE_API_KEY_PROD=public-firebase-key-prod
+FIREBASE_PROJECT_ID_DEVO=firebase-project-devo
+FIREBASE_PROJECT_ID_STAGING=firebase-project-staging
+FIREBASE_PROJECT_ID_PROD=firebase-project-prod
+SUPABASE_URL_DEVO=https://devo-project.supabase.co
+SUPABASE_URL_STAGING=https://staging-project.supabase.co
+SUPABASE_URL_PROD=https://prod-project.supabase.co
+SUPABASE_ANON_KEY_DEVO=public-supabase-key-devo
+SUPABASE_ANON_KEY_STAGING=public-supabase-key-staging
+SUPABASE_ANON_KEY_PROD=public-supabase-key-prod
 OIDC_ISSUER_URL_DEVO=https://issuer.example.com/devo
 OIDC_ISSUER_URL_STAGING=https://issuer.example.com/staging
 OIDC_ISSUER_URL_PROD=https://issuer.example.com/prod
@@ -109,6 +122,7 @@ GITHUB_OWNER=customer-org
 DEPLOYMENT_REPO_NAME=customer-ltbase
 DEPLOYMENT_REPO_VISIBILITY=private
 DEPLOYMENT_REPO_DESCRIPTION="Customer LTBase deployment repo"
+CONTROLPLANE_UI_DOMAIN=admin.customer.example.com
 AWS_REGION_DEVO=ap-northeast-1
 AWS_REGION_STAGING=us-east-1
 AWS_REGION_PROD=us-west-2
@@ -140,6 +154,18 @@ AUTH_PROVIDER_CONFIG_FILE_DEVO=infra/auth-providers.devo.json
 AUTH_PROVIDER_CONFIG_FILE_STAGING=infra/auth-providers.staging.json
 AUTH_PROVIDER_CONFIG_FILE_PROD=infra/auth-providers.prod.json
 CLOUDFLARE_ZONE_ID=zone-123
+FIREBASE_API_KEY_DEVO=public-firebase-key-devo
+FIREBASE_API_KEY_STAGING=public-firebase-key-staging
+FIREBASE_API_KEY_PROD=public-firebase-key-prod
+FIREBASE_PROJECT_ID_DEVO=firebase-project-devo
+FIREBASE_PROJECT_ID_STAGING=firebase-project-staging
+FIREBASE_PROJECT_ID_PROD=firebase-project-prod
+SUPABASE_URL_DEVO=https://devo-project.supabase.co
+SUPABASE_URL_STAGING=https://staging-project.supabase.co
+SUPABASE_URL_PROD=https://prod-project.supabase.co
+SUPABASE_ANON_KEY_DEVO=public-supabase-key-devo
+SUPABASE_ANON_KEY_STAGING=public-supabase-key-staging
+SUPABASE_ANON_KEY_PROD=public-supabase-key-prod
 OIDC_ISSUER_URL_DEVO=https://issuer.example.com/devo
 OIDC_ISSUER_URL_STAGING=https://issuer.example.com/staging
 OIDC_ISSUER_URL_PROD=https://issuer.example.com/prod
@@ -153,6 +179,156 @@ DSQL_PORT=5432
 DSQL_DB=postgres
 DSQL_USER=admin
 DSQL_PROJECT_SCHEMA=ltbase
+GEMINI_API_KEY=test-gemini-key
+CLOUDFLARE_API_TOKEN=test-cloudflare-token
+LTBASE_RELEASES_TOKEN=test-release-token
+EOF
+}
+
+write_env_firebase_only() {
+  local path="$1"
+  cat >"${path}" <<'EOF'
+STACKS=devo,staging,prod
+PROMOTION_PATH=devo,staging,prod
+TEMPLATE_REPO=Lychee-Technology/ltbase-private-deployment
+GITHUB_OWNER=customer-org
+DEPLOYMENT_REPO_NAME=customer-ltbase
+DEPLOYMENT_REPO_VISIBILITY=private
+DEPLOYMENT_REPO_DESCRIPTION="Customer LTBase deployment repo"
+CONTROLPLANE_UI_DOMAIN=admin.customer.example.com
+AWS_REGION_DEVO=ap-northeast-1
+AWS_REGION_STAGING=us-east-1
+AWS_REGION_PROD=us-west-2
+AWS_ACCOUNT_ID_DEVO=123456789012
+AWS_ACCOUNT_ID_STAGING=123456789012
+AWS_ACCOUNT_ID_PROD=210987654321
+AWS_PROFILE_DEVO=devo-profile
+AWS_PROFILE_STAGING=staging-profile
+AWS_PROFILE_PROD=prod-profile
+AWS_ROLE_NAME_DEVO=ltbase-deploy-devo
+AWS_ROLE_NAME_STAGING=ltbase-deploy-staging
+AWS_ROLE_NAME_PROD=ltbase-deploy-prod
+PULUMI_STATE_BUCKET=test-pulumi-state
+PULUMI_KMS_ALIAS=alias/test-pulumi-secrets
+PULUMI_BACKEND_URL=s3://test-pulumi-state
+LTBASE_RELEASES_REPO=Lychee-Technology/ltbase-releases
+LTBASE_RELEASE_ID=v1.0.0
+API_DOMAIN_DEVO=api.devo.example.com
+API_DOMAIN_STAGING=api.staging.example.com
+API_DOMAIN_PROD=api.example.com
+CONTROL_DOMAIN_DEVO=control.devo.example.com
+CONTROL_DOMAIN_STAGING=control.staging.example.com
+CONTROL_DOMAIN_PROD=control.example.com
+AUTH_DOMAIN_DEVO=auth.devo.example.com
+AUTH_DOMAIN_STAGING=auth.staging.example.com
+AUTH_DOMAIN_PROD=auth.example.com
+PROJECT_ID=33333333-3333-4333-8333-333333333333
+AUTH_PROVIDER_CONFIG_FILE_DEVO=infra/auth-providers.devo.json
+AUTH_PROVIDER_CONFIG_FILE_STAGING=infra/auth-providers.staging.json
+AUTH_PROVIDER_CONFIG_FILE_PROD=infra/auth-providers.prod.json
+CLOUDFLARE_ZONE_ID=zone-123
+FIREBASE_API_KEY_DEVO=public-firebase-key-devo
+FIREBASE_API_KEY_STAGING=public-firebase-key-staging
+FIREBASE_API_KEY_PROD=public-firebase-key-prod
+FIREBASE_PROJECT_ID_DEVO=firebase-project-devo
+FIREBASE_PROJECT_ID_STAGING=firebase-project-staging
+FIREBASE_PROJECT_ID_PROD=firebase-project-prod
+SUPABASE_URL_DEVO=
+SUPABASE_URL_STAGING=
+SUPABASE_URL_PROD=
+SUPABASE_ANON_KEY_DEVO=
+SUPABASE_ANON_KEY_STAGING=
+SUPABASE_ANON_KEY_PROD=
+OIDC_ISSUER_URL_DEVO=https://issuer.example.com/devo
+OIDC_ISSUER_URL_STAGING=https://issuer.example.com/staging
+OIDC_ISSUER_URL_PROD=https://issuer.example.com/prod
+JWKS_URL_DEVO=https://issuer.example.com/devo/jwks.json
+JWKS_URL_STAGING=https://issuer.example.com/staging/jwks.json
+JWKS_URL_PROD=https://issuer.example.com/prod/jwks.json
+OIDC_DISCOVERY_DOMAIN=oidc.customer.example.com
+CLOUDFLARE_ACCOUNT_ID=cf-account-123
+GEMINI_MODEL=gemini-3.1-flash-lite
+DSQL_PORT=5432
+DSQL_DB=postgres
+DSQL_USER=admin
+DSQL_PROJECT_SCHEMA=ltbase
+MTLS_TRUSTSTORE_FILE=infra/certs/cloudflare-origin-pull-ca.pem
+MTLS_TRUSTSTORE_KEY=mtls/cloudflare-origin-pull-ca.pem
+GEMINI_API_KEY=test-gemini-key
+CLOUDFLARE_API_TOKEN=test-cloudflare-token
+LTBASE_RELEASES_TOKEN=test-release-token
+EOF
+}
+
+write_env_partial_firebase() {
+  local path="$1"
+  cat >"${path}" <<'EOF'
+STACKS=devo,staging,prod
+PROMOTION_PATH=devo,staging,prod
+TEMPLATE_REPO=Lychee-Technology/ltbase-private-deployment
+GITHUB_OWNER=customer-org
+DEPLOYMENT_REPO_NAME=customer-ltbase
+DEPLOYMENT_REPO_VISIBILITY=private
+DEPLOYMENT_REPO_DESCRIPTION="Customer LTBase deployment repo"
+CONTROLPLANE_UI_DOMAIN=admin.customer.example.com
+AWS_REGION_DEVO=ap-northeast-1
+AWS_REGION_STAGING=us-east-1
+AWS_REGION_PROD=us-west-2
+AWS_ACCOUNT_ID_DEVO=123456789012
+AWS_ACCOUNT_ID_STAGING=123456789012
+AWS_ACCOUNT_ID_PROD=210987654321
+AWS_PROFILE_DEVO=devo-profile
+AWS_PROFILE_STAGING=staging-profile
+AWS_PROFILE_PROD=prod-profile
+AWS_ROLE_NAME_DEVO=ltbase-deploy-devo
+AWS_ROLE_NAME_STAGING=ltbase-deploy-staging
+AWS_ROLE_NAME_PROD=ltbase-deploy-prod
+PULUMI_STATE_BUCKET=test-pulumi-state
+PULUMI_KMS_ALIAS=alias/test-pulumi-secrets
+PULUMI_BACKEND_URL=s3://test-pulumi-state
+LTBASE_RELEASES_REPO=Lychee-Technology/ltbase-releases
+LTBASE_RELEASE_ID=v1.0.0
+API_DOMAIN_DEVO=api.devo.example.com
+API_DOMAIN_STAGING=api.staging.example.com
+API_DOMAIN_PROD=api.example.com
+CONTROL_DOMAIN_DEVO=control.devo.example.com
+CONTROL_DOMAIN_STAGING=control.staging.example.com
+CONTROL_DOMAIN_PROD=control.example.com
+AUTH_DOMAIN_DEVO=auth.devo.example.com
+AUTH_DOMAIN_STAGING=auth.staging.example.com
+AUTH_DOMAIN_PROD=auth.example.com
+PROJECT_ID=33333333-3333-4333-8333-333333333333
+AUTH_PROVIDER_CONFIG_FILE_DEVO=infra/auth-providers.devo.json
+AUTH_PROVIDER_CONFIG_FILE_STAGING=infra/auth-providers.staging.json
+AUTH_PROVIDER_CONFIG_FILE_PROD=infra/auth-providers.prod.json
+CLOUDFLARE_ZONE_ID=zone-123
+FIREBASE_API_KEY_DEVO=public-firebase-key-devo
+FIREBASE_API_KEY_STAGING=public-firebase-key-staging
+FIREBASE_API_KEY_PROD=public-firebase-key-prod
+FIREBASE_PROJECT_ID_DEVO=
+FIREBASE_PROJECT_ID_STAGING=firebase-project-staging
+FIREBASE_PROJECT_ID_PROD=firebase-project-prod
+SUPABASE_URL_DEVO=https://devo-project.supabase.co
+SUPABASE_URL_STAGING=https://staging-project.supabase.co
+SUPABASE_URL_PROD=https://prod-project.supabase.co
+SUPABASE_ANON_KEY_DEVO=public-supabase-key-devo
+SUPABASE_ANON_KEY_STAGING=public-supabase-key-staging
+SUPABASE_ANON_KEY_PROD=public-supabase-key-prod
+OIDC_ISSUER_URL_DEVO=https://issuer.example.com/devo
+OIDC_ISSUER_URL_STAGING=https://issuer.example.com/staging
+OIDC_ISSUER_URL_PROD=https://issuer.example.com/prod
+JWKS_URL_DEVO=https://issuer.example.com/devo/jwks.json
+JWKS_URL_STAGING=https://issuer.example.com/staging/jwks.json
+JWKS_URL_PROD=https://issuer.example.com/prod/jwks.json
+OIDC_DISCOVERY_DOMAIN=oidc.customer.example.com
+CLOUDFLARE_ACCOUNT_ID=cf-account-123
+GEMINI_MODEL=gemini-3.1-flash-lite
+DSQL_PORT=5432
+DSQL_DB=postgres
+DSQL_USER=admin
+DSQL_PROJECT_SCHEMA=ltbase
+MTLS_TRUSTSTORE_FILE=infra/certs/cloudflare-origin-pull-ca.pem
+MTLS_TRUSTSTORE_KEY=mtls/cloudflare-origin-pull-ca.pem
 GEMINI_API_KEY=test-gemini-key
 CLOUDFLARE_API_TOKEN=test-cloudflare-token
 LTBASE_RELEASES_TOKEN=test-release-token
@@ -179,6 +355,17 @@ if [[ "${cmd} ${sub}" == "repo view" ]]; then
   if [[ "${3:-}" == "customer-org/customer-ltbase-oidc-discovery" && "${SCENARIO}" == "oidc_companion_missing" ]]; then
     printf 'GraphQL: Could not resolve to a Repository with the name %s.\n' "${3}" >&2
     exit 1
+  fi
+  exit 0
+fi
+if [[ "${cmd} ${sub}" == "repo clone" ]]; then
+  dest="${4:-}"
+  mkdir -p "${dest}"
+  if [[ "${dest}" == *"/companion" ]]; then
+    mkdir -p "${dest}/.git"
+    printf 'existing repo\n' >"${dest}/README.md"
+  else
+    printf 'template repo\n' >"${dest}/README.md"
   fi
   exit 0
 fi
@@ -212,6 +399,10 @@ if [[ "${cmd}" == "api" ]]; then
     exit 0
   fi
   if [[ "${url}" == "repos/customer-org/customer-ltbase-oidc-discovery" ]]; then
+    printf '{"default_branch":"main","private":false}\n'
+    exit 0
+  fi
+  if [[ "${url}" == "repos/customer-org/customer-ltbase-controlplane-ui" ]]; then
     printf '{"default_branch":"main","private":false}\n'
     exit 0
   fi
@@ -430,6 +621,38 @@ printf 'NOISY_CURL_STDERR generic success\n' >&2
 EOF
   chmod +x "${fake_bin}/curl"
 
+  cat >"${fake_bin}/git" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'git %s\n' "$*" >>"${COMMAND_LOG}"
+repo_dir=""
+args=("$@")
+if [[ "${args[0]:-}" == "-C" ]]; then
+  repo_dir="${args[1]}"
+  args=("${args[@]:2}")
+fi
+if [[ "${args[0]:-}" == "diff" && "${args[1]:-}" == "--quiet" ]]; then
+  exit 0
+fi
+if [[ "${args[0]:-}" == "add" || "${args[0]:-}" == "commit" || "${args[0]:-}" == "push" ]]; then
+  exit 0
+fi
+printf 'repo:%s\n' "${repo_dir}" >>"${COMMAND_LOG}"
+exit 0
+EOF
+  chmod +x "${fake_bin}/git"
+
+  cat >"${fake_bin}/rsync" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'rsync %s\n' "$*" >>"${COMMAND_LOG}"
+src="${@: -2:1}"
+dest="${@: -1}"
+cp -R "${src}/." "${dest}/"
+exit 0
+EOF
+  chmod +x "${fake_bin}/rsync"
+
   cat >"${fake_bin}/pulumi" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -546,6 +769,8 @@ EOF
 done
 
 write_env "${temp_dir}/.env"
+write_env_firebase_only "${temp_dir}/firebase-only.env"
+write_env_partial_firebase "${temp_dir}/partial-firebase.env"
 setup_fake_bin "${temp_dir}/bin" "${temp_dir}/commands.log"
 
 write_env_without_mtls "${temp_dir}/missing-mtls.env"
@@ -580,6 +805,25 @@ run_expect_exit_code 2 env \
   "${SCRIPT_PATH}" --env-file "${temp_dir}/.env" --infra-dir "${temp_dir}/infra" --report-dir "${temp_dir}/report-topology-missing"
 
 assert_file_contains "${temp_dir}/report-topology-missing/report.json" '"status": "needs_repo_config"'
+
+run_expect_exit_code 2 env \
+  PATH="${temp_dir}/bin:$PATH" \
+  COMMAND_LOG="${temp_dir}/commands.log" \
+  SCENARIO="rollout_mix" \
+  "${SCRIPT_PATH}" --env-file "${temp_dir}/firebase-only.env" --infra-dir "${temp_dir}/infra" --report-dir "${temp_dir}/report-firebase-only"
+
+assert_file_contains "${temp_dir}/report-firebase-only/report.json" '"stack": "devo"'
+assert_file_contains "${temp_dir}/report-firebase-only/report.json" '"status": "needs_rollout"'
+
+if env \
+  PATH="${temp_dir}/bin:$PATH" \
+  COMMAND_LOG="${temp_dir}/commands.log" \
+  SCENARIO="rollout_mix" \
+  "${SCRIPT_PATH}" --env-file "${temp_dir}/partial-firebase.env" --infra-dir "${temp_dir}/infra" --report-dir "${temp_dir}/report-partial-firebase" >"${temp_dir}/partial-firebase.log" 2>&1; then
+  fail "expected partial Firebase auth config to fail"
+fi
+
+assert_log_contains "${temp_dir}/partial-firebase.log" "Firebase control plane UI config for stack devo must include both FIREBASE_PROJECT_ID_DEVO and FIREBASE_API_KEY_DEVO"
 
 rm -f "${temp_dir}/infra/Pulumi.devo.yaml" "${temp_dir}/infra/Pulumi.staging.yaml" "${temp_dir}/infra/Pulumi.prod.yaml"
 run_expect_exit_code 2 env \
@@ -688,6 +932,7 @@ assert_log_contains "${temp_dir}/commands.log" "gh repo create customer-org/cust
 assert_log_contains "${temp_dir}/commands.log" "aws --profile devo-profile iam create-open-id-connect-provider"
 assert_log_contains "${temp_dir}/commands.log" "aws --profile prod-profile iam create-open-id-connect-provider"
 assert_log_contains "${temp_dir}/commands.log" "gh repo create customer-org/customer-ltbase-oidc-discovery"
+assert_log_contains "${temp_dir}/report-force/actions.log" "${ROOT_DIR}/scripts/bootstrap-controlplane-ui-companion.sh --env-file ${temp_dir}/.env"
 assert_log_contains "${temp_dir}/commands.log" "https://api.cloudflare.com/client/v4/accounts/cf-account-123/pages/projects"
 assert_log_contains "${temp_dir}/commands.log" "pulumi stack init devo --secrets-provider awskms://alias/test-pulumi-secrets?region=ap-northeast-1"
 assert_log_contains "${temp_dir}/commands.log" "pulumi stack init staging --secrets-provider awskms://alias/test-pulumi-secrets?region=us-east-1"

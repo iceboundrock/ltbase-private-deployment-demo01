@@ -15,6 +15,23 @@ func TestSplitCSV(t *testing.T) {
 	}
 }
 
+func TestCorsAllowOriginsOrDefaultUsesWildcardWhenUnset(t *testing.T) {
+	got := corsAllowOriginsOrDefault("")
+	if len(got) != 1 || got[0] != "*" {
+		t.Fatalf("corsAllowOriginsOrDefault(\"\") = %#v", got)
+	}
+}
+
+func TestCorsAllowOriginsOrDefaultSplitsCSV(t *testing.T) {
+	got := corsAllowOriginsOrDefault("https://api.example.com, https://admin.example.com")
+	if len(got) != 2 {
+		t.Fatalf("corsAllowOriginsOrDefault() length = %d", len(got))
+	}
+	if got[0] != "https://api.example.com" || got[1] != "https://admin.example.com" {
+		t.Fatalf("corsAllowOriginsOrDefault() = %#v", got)
+	}
+}
+
 func TestValidateRequiresOIDCProviderArnWhenNotManaged(t *testing.T) {
 	cfg := StackConfig{
 		ManageGitHubOIDCProvider: false,
@@ -63,6 +80,10 @@ func TestValidateAllowsProjectIDAndAuthProviderConfigFile(t *testing.T) {
 		ManageGitHubOIDCProvider: true,
 		ProjectID:                "11111111-1111-4111-8111-111111111111",
 		AuthProviderConfigFile:   "infra/auth-providers.devo.json",
+		FirebaseAPIKey:           "public-firebase-key",
+		FirebaseProjectID:        "firebase-project-id",
+		SupabaseURL:              "https://project.supabase.co",
+		SupabaseAnonKey:          "public-anon-key",
 		MTLSTruststoreFile:       "infra/certs/cloudflare-origin-pull-ca.pem",
 		MTLSTruststoreKey:        "mtls/cloudflare-origin-pull-ca.pem",
 	}
@@ -74,6 +95,9 @@ func TestValidateAllowsProjectIDAndAuthProviderConfigFile(t *testing.T) {
 	}
 	if cfg.AuthProviderConfigFile == "" {
 		t.Fatal("AuthProviderConfigFile should be preserved")
+	}
+	if cfg.FirebaseAPIKey == "" || cfg.FirebaseProjectID == "" || cfg.SupabaseURL == "" || cfg.SupabaseAnonKey == "" {
+		t.Fatal("browser-safe auth provider config should be preserved")
 	}
 	if cfg.MTLSTruststoreFile == "" {
 		t.Fatal("MTLSTruststoreFile should be preserved")
