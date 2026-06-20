@@ -21,7 +21,7 @@ config:
   ltbase-infra:dsqlProjectSchema: ltbase
   ltbase-infra:geminiModel: gemini-3.1-flash-lite
   ltbase-infra:geminiApiKey:
-    secure: v1:qAMzyAwOaMe29aak:96WNUf6hLYBvZyS7wKT4/9pJQTIy+i43NMAsAl8yo6hjNUOKOoTGi2MGNnOd2j136E6qMj0d9Q==
+    secure: v1:B3soVS9O1u5vc0GB:pGTsnoPh2ImwfaX5NYL/johPfeWElGiZTfVjXVeML1U3fciLHPv/omVHdwev7m3erWlpURxICw==
   ltbase-infra:githubOidcProviderArn: arn:aws:iam::009853298710:oidc-provider/token.actions.githubusercontent.com
   ltbase-infra:deploymentAwsAccountId: "009853298710"
   ltbase-infra:projectId: d6ca77fc-176e-4ba8-8a5a-68ce81d3c7bd
@@ -32,7 +32,7 @@ config:
   ltbase-infra:authCorsAllowOrigins: '*'
   ltbase-infra:controlPlaneCorsAllowOrigins: https://demo01-admin.ltbase.dev
   ltbase-infra:firebaseApiKey:
-    secure: v1:TzYjL95UFJN1wIt8:u2H2oSwCrslHrBJGD4v31O533RE/E7ev0d9+C78clehJZZ0tBOapCB5WrqQCX4JiXmZvtYfyxg==
+    secure: v1:Wm80oHJPhbzcoNm1:gnZG3Ib6LvNY5zNIMEchMhXfsd+VImUd6pg4YQGUlqhQkY3YdHflAQq7CXW32AhWjZRxUHmIlw==
   ltbase-infra:firebaseProjectId: arched-symbol-326108
   ltbase-infra:supabaseUrl: ""
   ltbase-infra:supabaseAnonKey: ""
