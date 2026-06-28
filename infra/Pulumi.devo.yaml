@@ -21,18 +21,18 @@ config:
   ltbase-infra:dsqlProjectSchema: ltbase
   ltbase-infra:geminiModel: gemini-3.1-flash-lite
   ltbase-infra:geminiApiKey:
-    secure: v1:B3soVS9O1u5vc0GB:pGTsnoPh2ImwfaX5NYL/johPfeWElGiZTfVjXVeML1U3fciLHPv/omVHdwev7m3erWlpURxICw==
+    secure: v1:Vr1FlP3wEnRx4luu:P350RFJtF6Kzu2xdtAK9cqiho1g2KG+VotZio0vY5ZM+URPY7UhnlmldxKtuTok3sDB6KcEqgA==
   ltbase-infra:githubOidcProviderArn: arn:aws:iam::009853298710:oidc-provider/token.actions.githubusercontent.com
   ltbase-infra:deploymentAwsAccountId: "009853298710"
   ltbase-infra:projectId: d6ca77fc-176e-4ba8-8a5a-68ce81d3c7bd
   ltbase-infra:authProviderConfigFile: infra/auth-providers.devo.json
   ltbase-infra:schemaBucket: ltbase-private-deployment-demo01-schema-devo
-  ltbase-infra:controlPlaneCorsOrigins: https://demo01-admin.ltbase.dev
+  ltbase-infra:controlPlaneCorsOrigins: http://localhost:5173,https://demo01-admin.ltbase.dev
   ltbase-infra:apiCorsAllowOrigins: '*'
   ltbase-infra:authCorsAllowOrigins: '*'
-  ltbase-infra:controlPlaneCorsAllowOrigins: https://demo01-admin.ltbase.dev
+  ltbase-infra:controlPlaneCorsAllowOrigins: http://localhost:5173,https://demo01-admin.ltbase.dev
   ltbase-infra:firebaseApiKey:
-    secure: v1:Wm80oHJPhbzcoNm1:gnZG3Ib6LvNY5zNIMEchMhXfsd+VImUd6pg4YQGUlqhQkY3YdHflAQq7CXW32AhWjZRxUHmIlw==
+    secure: v1:es91L8A9HlaaIJYc:zQtqP4cSgnyGsACebLEpckl7OBsWC7WifGmrVfecv5yVIT+4bauzZ9K+pICr9gRFsbA9bIgsXw==
   ltbase-infra:firebaseProjectId: arched-symbol-326108
   ltbase-infra:supabaseUrl: ""
   ltbase-infra:supabaseAnonKey: ""
