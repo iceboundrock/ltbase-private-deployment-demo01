@@ -32,6 +32,7 @@ Use this guide to create the local `.env` file that drives the bootstrap scripts
     - `CONTROLPLANE_UI_DOMAIN`
     - `CLOUDFLARE_ACCOUNT_ID`
     - Source: your Cloudflare account and the custom domains you want to use for OIDC discovery and the control-plane UI admin site
+    - OIDC discovery uses a direct-upload Cloudflare Pages project managed entirely by the deployment repository. Bootstrap creates the Pages project, custom domain binding, and per-stack IAM roles; the `publish-oidc-discovery.yml` workflow generates discovery documents and deploys them with `wrangler pages deploy`. No OIDC discovery companion repository or template repository is created or required.
     - In the current repository version, the Control Plane UI bootstrap uses `CONTROLPLANE_UI_DOMAIN` when it provisions the control-plane UI companion Pages site and when it later writes `ltbase-infra:controlPlaneCorsOrigins=https://<CONTROLPLANE_UI_DOMAIN>` into each Pulumi stack.
 5. Fill in AWS environment values (one pair per stack):
    - `AWS_REGION_<STACK>`
@@ -170,7 +171,7 @@ Only fill these when the defaults are wrong for your customer environment:
 - preview and rollout require a valid `SCHEMA_BUCKET_<STACK>` repository variable for each stack; bootstrap writes it from `.env` or the derived default
 - expect bootstrap to write `ltbase-infra:controlPlaneCorsOrigins=https://<CONTROLPLANE_UI_DOMAIN>` into each stack config so the deployed control-plane API accepts browser calls from the admin UI domain
 - before operators try the admin UI, configure the identity provider to allow `https://<CONTROLPLANE_UI_DOMAIN>/auth/callback` and bind at least one admin user or group to the LTBase project you plan to manage
-- the following variables are auto-derived by `scripts/lib/bootstrap-env.sh` and normally do not need manual filling: `DEPLOYMENT_REPO`, `PULUMI_BACKEND_URL`, `PULUMI_SECRETS_PROVIDER_*`, `AWS_ROLE_ARN_*`, `OIDC_ISSUER_URL_*`, `JWKS_URL_*`, `RUNTIME_BUCKET_*`, `SCHEMA_BUCKET_*`, `TABLE_NAME_*`, `GITHUB_ORG`, `GITHUB_REPO`, `OIDC_DISCOVERY_PAGES_PROJECT`, `OIDC_DISCOVERY_TEMPLATE_REPO`, `OIDC_DISCOVERY_TEMPLATE_REF`, `OIDC_DISCOVERY_AWS_ROLE_NAME_*`, `OIDC_DISCOVERY_AWS_ROLE_ARN_*`, `PREVIEW_DEFAULT_STACK`
+- the following variables are auto-derived by `scripts/lib/bootstrap-env.sh` and normally do not need manual filling: `DEPLOYMENT_REPO`, `PULUMI_BACKEND_URL`, `PULUMI_SECRETS_PROVIDER_*`, `AWS_ROLE_ARN_*`, `OIDC_ISSUER_URL_*`, `JWKS_URL_*`, `RUNTIME_BUCKET_*`, `SCHEMA_BUCKET_*`, `TABLE_NAME_*`, `GITHUB_ORG`, `GITHUB_REPO`, `OIDC_DISCOVERY_PAGES_PROJECT`, `OIDC_DISCOVERY_AWS_ROLE_NAME_*`, `OIDC_DISCOVERY_AWS_ROLE_ARN_*`, `PREVIEW_DEFAULT_STACK`
 
 ## Expected Result
 
